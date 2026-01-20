@@ -1,0 +1,16 @@
+# Dependencies
+node_modules/
+.next/
+dist/
+
+# IDE
+.vscode/
+.idea/
+
+# Database & Environment
+.env
+postgres_data/
+
+# OS files
+.DS_Store
+Thumbs.db

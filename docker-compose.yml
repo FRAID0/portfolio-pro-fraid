@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules           # <--- MAGIE : Empêche le conflit Windows/Linux
+      - /app/.next                   # Accélère les builds en gardant le cache
+    environment:
+      - WATCHPACK_POLLING=true      # Aide au Hot Reload sur Windows
+    command: npm run dev -- --webpack -H 0.0.0.0
+
+  backend:
+    build: ./backend
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules           # Même chose pour le backend
+    environment:
+      - DATABASE_URL=postgresql://fraid:password@db:5432/portfolio_db
+    depends_on:
+      - db
+
+  db:
+    image: postgres:15
+    environment:
+      - POSTGRES_USER=fraid
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=portfolio_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  prometheus:
+    image: prom/prometheus
+    volumes:
+      - ./infra/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+
+volumes:
+  postgres_data:

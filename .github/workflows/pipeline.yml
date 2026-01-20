@@ -1,0 +1,37 @@
+name: CI/CD Portfolio Pro
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      # 1. TEST (Preuve de rigueur Fullstack)
+      - name: Install & Test Backend
+        run: |
+          cd backend
+          npm install
+          # npm test  <-- À décommenter quand tu auras des tests
+
+      # 2. DOCKER (Preuve DevOps)
+      - name: Build Docker Images
+        run: |
+          docker build -t fraid/portfolio-backend ./backend
+          docker build -t fraid/portfolio-frontend ./frontend
+
+      # 3. DEPLOY (Gratuit sur Render)
+      # On utilise un "Deploy Hook" de Render qui est gratuit et simple
+      - name: Deploy to Render
+        if: github.ref == 'refs/heads/main'
+        run: |
+          curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK_BACKEND }}
+          curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK_FRONTEND }}

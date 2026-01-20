@@ -1,0 +1,18 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// C'est ici qu'on définit la structure de tes projets pour ton portfolio
+model Project {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String
+  tech        String[] // Un tableau de technos (ex: ["Docker", "React"])
+  link        String?  // Lien vers le projet (optionnel)
+  createdAt   DateTime @default(now())
+}
