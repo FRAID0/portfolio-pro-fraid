@@ -11,7 +11,7 @@ const port = process.env.PORT || 5000;
 // Configuration CORS
 app.use(cors({
   origin: [
-    "https://portfolio-pro-fraid-mnu8-lsglbfn7u-fraids-projects.vercel.app", 
+    "https://portfolio-pro-fraid-68rp6xsg4-fraids-projects.vercel.app", 
     "http://localhost:3000"
   ],
   methods: ["GET", "POST", "DELETE"],
