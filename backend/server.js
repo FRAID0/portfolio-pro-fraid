@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const nodemailer = require('nodemailer');
+const nodemailer = require('nodemailer'); // Importé pour l'envoi d'emails
 require('dotenv').config();
 const { PrismaClient } = require('@prisma/client');
 
@@ -8,156 +8,111 @@ const prisma = new PrismaClient();
 const app = express();
 const port = process.env.PORT || 5000;
 
-/* ======================================================
-   ✅ CORS — DOIT ÊTRE AVANT TOUT
-====================================================== */
+// Configuration CORS
 app.use(cors({
   origin: [
-    "https://portfolio-pro-fraid-ivno4g1fp-fraids-projects.vercel.app",
+    "https://portfolio-pro-fraid-68rp6xsg4-fraids-projects.vercel.app", 
     "http://localhost:3000"
   ],
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: [
-    "Content-Type",
-    "Authorization",
-    "x-admin-key"
-  ],
-  credentials: false
+  methods: ["GET", "POST", "DELETE"],
+  allowedHeaders: ["Content-Type", "x-admin-key"]
 }));
 
-/* ✅ Preflight obligatoire (Render / Vercel) */
-app.options("*", cors());
-
-/* ======================================================
-   MIDDLEWARES
-====================================================== */
 app.use(express.json());
 
 const ADMIN_KEY = process.env.ADMIN_SECRET_KEY;
 
-/* ======================================================
-   EMAIL (GMAIL)
-====================================================== */
+// Configuration du transporteur Nodemailer vers 5667tom@gmail.com
 const transporter = nodemailer.createTransport({
   host: "smtp.gmail.com",
   port: 465,
-  secure: true,
+  secure: true, // Utilise SSL
   auth: {
-    user: "5667tom@gmail.com",
+    user: '5667tom@gmail.com',
     pass: process.env.EMAIL_PASSWORD
   },
   tls: {
-    rejectUnauthorized: false
+    // Indispensable pour éviter les erreurs de certificat sur Render
+    rejectUnauthorized: false 
   },
-  connectionTimeout: 10000
+  connectionTimeout: 10000 // Augmente le délai à 10 secondes
 });
 
-/* ======================================================
-   ADMIN GUARD
-====================================================== */
+// Middleware de sécurité pour l'admin
 const checkAdmin = (req, res, next) => {
-  const apiKey = req.headers["x-admin-key"];
+  const apiKey = req.headers['x-admin-key'];
   if (apiKey && ADMIN_KEY && apiKey === ADMIN_KEY) {
-    return next();
+    next();
+  } else {
+    res.status(403).json({ error: "Accès refusé. Clé API invalide." });
   }
-  return res.status(403).json({ error: "Accès refusé." });
 };
 
-/* ======================================================
-   ROUTES PROJETS
-====================================================== */
-app.get("/api/projects", async (req, res) => {
+// --- ROUTES PROJETS ---
+
+app.get('/api/projects', async (req, res) => {
   try {
     const projects = await prisma.project.findMany({
-      orderBy: { createdAt: "desc" },
-      select: {
-        id: true,
-        title: true,
-        tech: true,
-        category: true,
-        description: true,
-        imageUrl: true
-      }
+      orderBy: { createdAt: 'desc' },
+      select: { id: true, title: true, tech: true, category: true, description: true, imageUrl: true }
     });
-    res.status(200).json(projects);
+    res.json(projects);
   } catch (error) {
-    console.error("Erreur Prisma:", error);
+    console.error("Erreur Prisma (Liste):", error);
     res.status(500).json({ error: "Impossible de récupérer les projets." });
   }
 });
 
-app.get("/api/projects/:id", async (req, res) => {
-  const projectId = Number(req.params.id);
-  if (isNaN(projectId)) {
-    return res.status(400).json({ error: "ID invalide." });
-  }
+app.get('/api/projects/:id', async (req, res) => {
+  const { id } = req.params;
+  const projectId = parseInt(id);
+  if (isNaN(projectId)) return res.status(400).json({ error: "ID invalide." });
 
   try {
-    const project = await prisma.project.findUnique({
-      where: { id: projectId }
-    });
+    const project = await prisma.project.findUnique({ where: { id: projectId } });
+    if (!project) return res.status(404).json({ error: "Projet introuvable." });
 
-    if (!project) {
-      return res.status(404).json({ error: "Projet introuvable." });
-    }
-
-    res.status(200).json({
+    res.json({
       ...project,
-      media: [
-        {
-          type: "image",
-          url: project.imageUrl || "https://via.placeholder.com/800x450"
-        }
-      ]
+      media: [{ type: 'image', url: project.imageUrl || 'https://via.placeholder.com/800x450' }]
     });
   } catch (error) {
     res.status(500).json({ error: "Erreur serveur." });
   }
 });
 
-/* ======================================================
-   CONTACT
-====================================================== */
-app.post("/api/contact", async (req, res) => {
+// --- ROUTE CONTACT (Hybride Prisma + Email) ---
+
+app.post('/api/contact', async (req, res) => {
   const { name, email, message } = req.body;
 
   try {
+    // 1. Sauvegarde locale pour l'historique admin
     await prisma.message.create({
-      data: {
-        senderName: name,
-        senderEmail: email,
-        content: message
-      }
+      data: { senderName: name, senderEmail: email, content: message }
     });
 
-    await transporter.sendMail({
-      from: `"Portfolio FRAID" <${email}>`,
-      to: "5667tom@gmail.com",
-      subject: `📧 Nouveau message de ${name}`,
-      text: `Email: ${email}\n\nMessage:\n${message}`
-    });
+    // 2. Notification mail instantanée vers ton Gmail
+    const mailOptions = {
+      from: email,
+      to: '5667tom@gmail.com',
+      subject: `📧 Nouveau message Portfolio de ${name}`,
+      text: `De: ${name} (${email})\n\nMessage: ${message}`
+    };
 
-    res.status(200).json({ success: true });
+    await transporter.sendMail(mailOptions);
+    res.status(200).json({ success: "Message envoyé et reçu !" });
   } catch (error) {
     console.error("Erreur Contact:", error);
     res.status(500).json({ error: "Impossible d'envoyer le message." });
   }
 });
 
-/* ======================================================
-   HEALTHCHECK
-====================================================== */
-app.get("/health", (req, res) => {
-  res.status(200).json({
-    status: "UP",
-    database: "CONNECTED",
-    timestamp: new Date().toISOString()
-  });
+// --- DEVOPS ---
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'UP', database: 'CONNECTED', timestamp: new Date().toISOString() });
 });
 
-/* ======================================================
-   SERVER
-====================================================== */
 app.listen(port, () => {
-  console.log(`🚀 Backend FRAID en ligne sur le port ${port}`);
+  console.log(`🚀 Backend Portfolio FRAID prêt sur http://localhost:${port}`);
 });
