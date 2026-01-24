@@ -24,11 +24,18 @@ const ADMIN_KEY = process.env.ADMIN_SECRET_KEY;
 
 // Configuration du transporteur Nodemailer vers 5667tom@gmail.com
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: "smtp.gmail.com",
+  port: 465,
+  secure: true, // Utilise SSL
   auth: {
     user: '5667tom@gmail.com',
-    pass: process.env.EMAIL_PASSWORD // Ton mot de passe d'application
-  }
+    pass: process.env.EMAIL_PASSWORD
+  },
+  tls: {
+    // Indispensable pour éviter les erreurs de certificat sur Render
+    rejectUnauthorized: false 
+  },
+  connectionTimeout: 10000 // Augmente le délai à 10 secondes
 });
 
 // Middleware de sécurité pour l'admin
