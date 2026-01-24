@@ -1,5 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
 }
 
 datasource db {
@@ -7,12 +8,33 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// C'est ici qu'on définit la structure de tes projets pour ton portfolio
+// 1. Table des Projets (Optimisée pour l'affichage et l'admin)
 model Project {
   id          Int      @id @default(autoincrement())
   title       String
   description String
-  tech        String[] // Un tableau de technos (ex: ["Docker", "React"])
-  link        String?  // Lien vers le projet (optionnel)
+  category    String   // Pour filtrer par IoT, Mobile, Fullstack
+  tech        String   // On repasse en String simple pour plus de flexibilité avec ton formulaire actuel
+  imageUrl    String?  // Axe 2 : Pour tes captures d'écran
+  githubLink  String?  
+  liveLink    String?
+  createdAt   DateTime @default(now())
+}
+
+// 2. Table des Compétences (Pour la page About dynamique)
+model Skill {
+  id       Int     @id @default(autoincrement())
+  name     String
+  category String  // ex: "Langages", "Frameworks", "DevOps"
+  level    String? // ex: "Avancé", "Intermédiaire"
+}
+
+// 3. Table des Messages (Pour ton futur formulaire de contact)
+model Message {
+  id          Int      @id @default(autoincrement())
+  senderName  String
+  senderEmail String
+  content     String
+  isPrivate   Boolean  @default(true)
   createdAt   DateTime @default(now())
 }

@@ -2,14 +2,18 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# On copie d'abord les fichiers de dépendances
+# 1️⃣ Dépendances
 COPY package*.json ./
 RUN npm install
 
-# On copie le reste du code
+# 2️⃣ Code source
 COPY . .
 
-# On expose le port de l'API
+# 3️⃣ 🔴 OBLIGATOIRE POUR PRISMA + DOCKER
+RUN npx prisma generate
+
+# 4️⃣ Port API
 EXPOSE 5000
 
+# 5️⃣ Lancement
 CMD ["node", "server.js"]

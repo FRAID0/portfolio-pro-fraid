@@ -7,21 +7,24 @@ services:
       - "3000:3000"
     volumes:
       - ./frontend:/app
-      - /app/node_modules           # <--- MAGIE : Empêche le conflit Windows/Linux
-      - /app/.next                   # Accélère les builds en gardant le cache
+      - /app/node_modules
+      - /app/.next
     environment:
-      - WATCHPACK_POLLING=true      # Aide au Hot Reload sur Windows
+      - WATCHPACK_POLLING=true
     command: npm run dev -- --webpack -H 0.0.0.0
 
   backend:
     build: ./backend
     ports:
       - "5000:5000"
+      - "5555:5555"
     volumes:
       - ./backend:/app
-      - /app/node_modules           # Même chose pour le backend
+      - /app/node_modules
     environment:
+      # CHANGEMENT ICI : Port 6543 + PgBouncer pour passer les pare-feu
       - DATABASE_URL=postgresql://fraid:password@db:5432/portfolio_db
+    # On garde depends_on pour la forme, mais le backend ignorera la db locale
     depends_on:
       - db
 
