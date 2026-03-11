@@ -1,0 +1,11 @@
+# Local, non-versionned inputs (URLs/IDs without secrets can be committed if desired)
+inputs.json
+
+# Collected raw logs can contain PII/secrets; keep only redacted excerpts in git
+logs/raw/
+
+# Generated outputs (reproducible; avoid committing account-specific data by default)
+out/
+
+# Local cache
+.cache/

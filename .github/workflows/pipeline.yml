@@ -13,14 +13,25 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: |
+            backend/package-lock.json
+            frontend/package-lock.json
 
       # 1. TEST (Preuve de rigueur Fullstack)
       - name: Install & Test Backend
         run: |
           cd backend
-          npm install
+          npm ci
           # npm test  <-- À décommenter quand tu auras des tests
+
+      - name: Install, Lint & Build Frontend
+        run: |
+          cd frontend
+          npm ci
+          npm run lint
+          npm run build
 
       # 2. DOCKER (Preuve DevOps)
       - name: Build Docker Images

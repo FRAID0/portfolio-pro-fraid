@@ -8,7 +8,10 @@ dist/
 .idea/
 
 # Database & Environment
-.env
+.env*
+!.env.example
+!**/.env.example
+!**/.env.local.example
 postgres_data/
 
 # OS files
