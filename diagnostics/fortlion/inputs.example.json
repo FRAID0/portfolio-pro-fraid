@@ -1,0 +1,24 @@
+{
+  "project": "FortLion",
+  "date": "2026-03-11",
+  "prod": {
+    "url": "<URL_PROD>",
+    "domainApex": "<apex-domain.tld>",
+    "domainWww": "www.<apex-domain.tld>"
+  },
+  "stage": {
+    "url": "<URL_STAGE>",
+    "domainApex": "<stage-domain.tld>",
+    "domainWww": "www.<stage-domain.tld>"
+  },
+  "render": {
+    "backendServiceId": "<render-backend-service-id>",
+    "frontendServiceId": "<render-frontend-service-id-or-empty>"
+  },
+  "vercel": {
+    "prodProjectId": "<vercel-prod-project-id>",
+    "stageProjectId": "<vercel-stage-project-id>",
+    "teamId": ""
+  }
+}
+
