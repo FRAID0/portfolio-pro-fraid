@@ -6,11 +6,14 @@ RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm install
+RUN npm ci
 
 COPY . .
 
+# Build the Next.js app
+RUN npm run build
+
 EXPOSE 3000
 
-# On lance en mode dev avec webpack forcé
-CMD ["npm", "run", "dev", "--", "--webpack"]
+# Start in production mode
+CMD ["npm", "start"]

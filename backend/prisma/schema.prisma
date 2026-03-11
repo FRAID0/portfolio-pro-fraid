@@ -4,8 +4,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 // 1. Table des Projets (Optimisée pour l'affichage et l'admin)
@@ -19,6 +20,8 @@ model Project {
   githubLink  String?  
   liveLink    String?
   createdAt   DateTime @default(now())
+
+  @@map("projects")
 }
 
 // 2. Table des Compétences (Pour la page About dynamique)
@@ -27,6 +30,8 @@ model Skill {
   name     String
   category String  // ex: "Langages", "Frameworks", "DevOps"
   level    String? // ex: "Avancé", "Intermédiaire"
+
+  @@map("skills")
 }
 
 // 3. Table des Messages (Pour ton futur formulaire de contact)
@@ -37,4 +42,28 @@ model Message {
   content     String
   isPrivate   Boolean  @default(true)
   createdAt   DateTime @default(now())
+
+  @@map("messages")
+}
+
+// 4. Table des Tags (Pour sélections dynamiques type LinkedIn)
+model Tag {
+  id    Int     @id @default(autoincrement())
+  name  String  @unique
+  type  String  // Enum-like string "TECH" ou "CATEGORY"
+
+  @@map("tags")
+}
+
+// 5. Table des Certificats
+model Certificate {
+  id        Int      @id @default(autoincrement())
+  title     String
+  issuer    String
+  date      String?  
+  link      String?  
+  imageUrl  String?
+  createdAt DateTime @default(now())
+
+  @@map("certificates")
 }

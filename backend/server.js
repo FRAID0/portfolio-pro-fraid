@@ -248,6 +248,189 @@ app.delete('/api/projects/:id', adminRateLimit, checkAdmin, async (req, res) => 
   }
 });
 
+app.put('/api/projects/:id', adminRateLimit, checkAdmin, async (req, res) => {
+  const { id } = req.params;
+  const projectId = parseInt(id);
+  if (isNaN(projectId)) return res.status(400).json({ error: "ID invalide." });
+
+  const { title, tech, category, description, imageUrl, githubLink, liveLink } = req.body || {};
+  try {
+    const updated = await prisma.project.update({
+      where: { id: projectId },
+      data: {
+        ...(title && { title: String(title).trim() }),
+        ...(tech && { tech: String(tech).trim() }),
+        ...(category && { category: String(category).trim() }),
+        ...(description && { description: String(description).trim() }),
+        ...(imageUrl !== undefined && { imageUrl: imageUrl ? String(imageUrl).trim() : null }),
+        ...(githubLink !== undefined && { githubLink: githubLink ? String(githubLink).trim() : null }),
+        ...(liveLink !== undefined && { liveLink: liveLink ? String(liveLink).trim() : null })
+      }
+    });
+    return res.status(200).json(updated);
+  } catch (error) {
+    console.error("Erreur Prisma (Update Project):", error);
+    return res.status(500).json({ error: "Impossible de mettre à jour le projet." });
+  }
+});
+
+// --- ROUTES SKILLS ---
+app.get('/api/skills', async (req, res) => {
+  try {
+    const skills = await prisma.skill.findMany();
+    res.json(skills);
+  } catch (error) {
+    return res.status(500).json({ error: "Impossible de récupérer les compétences." });
+  }
+});
+
+app.post('/api/skills', adminRateLimit, checkAdmin, async (req, res) => {
+  const { name, category, level } = req.body || {};
+  if (!name || !category) return res.status(400).json({ error: "Données invalides." });
+  try {
+    const created = await prisma.skill.create({
+      data: {
+        name: String(name).trim(),
+        category: String(category).trim(),
+        level: level ? String(level).trim() : null
+      }
+    });
+    return res.status(201).json(created);
+  } catch (error) {
+    return res.status(500).json({ error: "Erreur serveur lors de la création." });
+  }
+});
+
+app.put('/api/skills/:id', adminRateLimit, checkAdmin, async (req, res) => {
+  const id = parseInt(req.params.id);
+  if (isNaN(id)) return res.status(400).json({ error: "ID invalide." });
+  const { name, category, level } = req.body || {};
+  try {
+    const updated = await prisma.skill.update({
+      where: { id },
+      data: {
+        ...(name && { name: String(name).trim() }),
+        ...(category && { category: String(category).trim() }),
+        ...(level !== undefined && { level: level ? String(level).trim() : null })
+      }
+    });
+    return res.status(200).json(updated);
+  } catch (error) {
+    return res.status(500).json({ error: "Erreur serveur lors de la mise à jour." });
+  }
+});
+
+app.delete('/api/skills/:id', adminRateLimit, checkAdmin, async (req, res) => {
+  const id = parseInt(req.params.id);
+  if (isNaN(id)) return res.status(400).json({ error: "ID invalide." });
+  try {
+    await prisma.skill.delete({ where: { id } });
+    return res.status(200).json({ success: true });
+  } catch (error) {
+    return res.status(500).json({ error: "Impossible de supprimer la compétence." });
+  }
+});
+
+// --- ROUTES TAGS ---
+app.get('/api/tags', async (req, res) => {
+  try {
+    const tags = await prisma.tag.findMany();
+    res.json(tags);
+  } catch (error) {
+    return res.status(500).json({ error: "Impossible de récupérer les tags." });
+  }
+});
+
+app.post('/api/tags', adminRateLimit, checkAdmin, async (req, res) => {
+  const { name, type } = req.body || {};
+  if (!name || !type) return res.status(400).json({ error: "Données invalides." });
+  try {
+    const created = await prisma.tag.create({
+      data: {
+        name: String(name).trim(),
+        type: String(type).trim().toUpperCase()
+      }
+    });
+    return res.status(201).json(created);
+  } catch (error) {
+    return res.status(500).json({ error: "Erreur lors de la création du tag (Peut-être qu'il existe déjà ?)." });
+  }
+});
+
+app.delete('/api/tags/:id', adminRateLimit, checkAdmin, async (req, res) => {
+  const id = parseInt(req.params.id);
+  if (isNaN(id)) return res.status(400).json({ error: "ID invalide." });
+  try {
+    await prisma.tag.delete({ where: { id } });
+    return res.status(200).json({ success: true });
+  } catch (error) {
+    return res.status(500).json({ error: "Impossible de supprimer ce tag." });
+  }
+});
+
+// --- ROUTES CERTIFICATS ---
+app.get('/api/certificates', async (req, res) => {
+  try {
+    const certs = await prisma.certificate.findMany({
+      orderBy: { createdAt: 'desc' }
+    });
+    res.json(certs);
+  } catch (error) {
+    return res.status(500).json({ error: "Impossible de récupérer les certificats." });
+  }
+});
+
+app.post('/api/certificates', adminRateLimit, checkAdmin, async (req, res) => {
+  const { title, issuer, date, link, imageUrl } = req.body || {};
+  if (!title || !issuer) return res.status(400).json({ error: "Le titre et l'organisme sont requis." });
+  try {
+    const created = await prisma.certificate.create({
+      data: {
+        title: String(title).trim(),
+        issuer: String(issuer).trim(),
+        date: date ? String(date).trim() : null,
+        link: link ? String(link).trim() : null,
+        imageUrl: imageUrl ? String(imageUrl).trim() : null,
+      }
+    });
+    return res.status(201).json(created);
+  } catch (error) {
+    return res.status(500).json({ error: "Erreur serveur lors de la création du certificat." });
+  }
+});
+
+app.put('/api/certificates/:id', adminRateLimit, checkAdmin, async (req, res) => {
+  const id = parseInt(req.params.id);
+  if (isNaN(id)) return res.status(400).json({ error: "ID invalide." });
+  const { title, issuer, date, link, imageUrl } = req.body || {};
+  try {
+    const updated = await prisma.certificate.update({
+      where: { id },
+      data: {
+        ...(title && { title: String(title).trim() }),
+        ...(issuer && { issuer: String(issuer).trim() }),
+        ...(date !== undefined && { date: date ? String(date).trim() : null }),
+        ...(link !== undefined && { link: link ? String(link).trim() : null }),
+        ...(imageUrl !== undefined && { imageUrl: imageUrl ? String(imageUrl).trim() : null })
+      }
+    });
+    return res.status(200).json(updated);
+  } catch (error) {
+    return res.status(500).json({ error: "Impossible de mettre à jour le certificat." });
+  }
+});
+
+app.delete('/api/certificates/:id', adminRateLimit, checkAdmin, async (req, res) => {
+  const id = parseInt(req.params.id);
+  if (isNaN(id)) return res.status(400).json({ error: "ID invalide." });
+  try {
+    await prisma.certificate.delete({ where: { id } });
+    return res.status(200).json({ success: true });
+  } catch (error) {
+    return res.status(500).json({ error: "Impossible de supprimer ce certificat." });
+  }
+});
+
 // Admin messages
 app.get('/api/messages', adminRateLimit, checkAdmin, async (req, res) => {
   try {
