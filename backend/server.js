@@ -35,7 +35,7 @@ app.use(cors({
     if (allowVercelPreviewOrigins && origin.endsWith('.vercel.app')) return cb(null, true);
     return cb(null, false);
   },
-  methods: ["GET", "POST", "DELETE"],
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
   allowedHeaders: ["Content-Type", "x-admin-key"]
 }));
 
@@ -114,7 +114,16 @@ app.use((req, res, next) => {
 // Middleware de sécurité pour l'admin
 const checkAdmin = (req, res, next) => {
   const apiKey = req.headers['x-admin-key'];
-  if (apiKey && ADMIN_KEY && apiKey === ADMIN_KEY) {
+  
+  // Debug log (à retirer après résolution)
+  console.log(`[AUTH] Key received: "${apiKey}" | Expected: "${ADMIN_KEY}"`);
+
+  if (!ADMIN_KEY) {
+    console.error("[CRITICAL] ADMIN_SECRET_KEY is NOT defined in .env!");
+    return res.status(500).json({ error: "Erreur de configuration serveur." });
+  }
+
+  if (apiKey && apiKey === ADMIN_KEY) {
     next();
   } else {
     res.status(403).json({ error: "Accès refusé. Clé API invalide." });
