@@ -41,11 +41,20 @@ export default function FraidAdmin() {
       });
       if (res.ok) {
         setIsVerified(true);
+        setStatus({ message: '', type: '' });
       } else {
         setIsVerified(false);
+        if (res.status === 404) {
+          setStatus({ message: "Erreur 404 : La route de vérification n'existe pas encore sur le serveur. As-tu bien PUSHÉ les changements backend sur GitHub ?", type: 'error' });
+        } else if (res.status === 403) {
+          setStatus({ message: "Clé incorrecte. Vérifie ton fichier .env backend.", type: 'error' });
+        } else {
+          setStatus({ message: `Erreur serveur (${res.status}).`, type: 'error' });
+        }
       }
     } catch (e) {
       setIsVerified(false);
+      setStatus({ message: "Impossible de contacter le serveur backend. Vérifie ton apiUrl ou ta connexion.", type: 'error' });
     } finally {
       setIsVerifying(false);
     }
@@ -238,7 +247,11 @@ export default function FraidAdmin() {
               onChange={(e) => handleKeyChange(e.target.value)}
             />
             {isVerifying && <span className="text-[10px] text-blue-400 mt-1 animate-pulse">Vérification...</span>}
-            {adminKey && !isVerified && !isVerifying && <span className="text-[10px] text-red-500 mt-1">Clé invalide ou accès refusé.</span>}
+            {adminKey && !isVerified && !isVerifying && (
+              <span className="text-[10px] text-red-500 mt-1 block">
+                {status.message || "Clé invalide ou accès refusé."}
+              </span>
+            )}
             {isVerified && <span className="text-[10px] text-green-500 mt-1">Accès autorisé ✅</span>}
           </div>
           {adminKey && (
