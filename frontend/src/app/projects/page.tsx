@@ -16,9 +16,7 @@ export default function ProjectsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-    
-    fetch(`${apiUrl}/api/projects`)
+    fetch(`/api/projects`)
       .then((res) => res.json())
       .then((data) => {
         setProjects(data);

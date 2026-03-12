@@ -38,11 +38,10 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
     setIsLoading(true);
     Promise.all([
-      fetch(`${apiUrl}/api/projects`).then(res => res.json()).catch(() => []),
-      fetch(`${apiUrl}/api/certificates`).then(res => res.json()).catch(() => [])
+      fetch(`/api/projects`).then(res => res.json()).catch(() => []),
+      fetch(`/api/certificates`).then(res => res.json()).catch(() => [])
     ])
       .then(([projectsData, certsData]) => {
         if (Array.isArray(projectsData)) setProjects(projectsData.slice(0, 4));

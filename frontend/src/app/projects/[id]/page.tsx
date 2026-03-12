@@ -31,9 +31,7 @@ export default function ProjectDetail() {
   useEffect(() => {
     if (!params?.id) return;
 
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
-
-    fetch(`${apiUrl}/api/projects/${params.id}`)
+    fetch(`/api/projects/${params.id}`)
       .then(res => {
         if (!res.ok) throw new Error('Projet introuvable');
         return res.json();
