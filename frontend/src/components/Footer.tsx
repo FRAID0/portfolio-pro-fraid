@@ -46,6 +46,13 @@ export default function Footer() {
             >
               Contact
             </a>
+
+            <Link
+              href="/fraid-admin"
+              className="text-slate-700 hover:text-slate-500 transition-all font-mono text-[10px] uppercase tracking-tighter"
+            >
+              Admin
+            </Link>
           </div>
         </div>
       </div>

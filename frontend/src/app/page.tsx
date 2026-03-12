@@ -227,6 +227,18 @@ export default function Home() {
                     </motion.div>
                   ))}
                 </div>
+                
+                <div className="mt-10 text-center">
+                  <Link 
+                    href="/certifications" 
+                    className="inline-flex items-center gap-2 py-2.5 px-6 rounded-full bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-500 text-xs font-bold uppercase tracking-widest transition-all border border-yellow-500/30"
+                  >
+                    Voir mon parcours complet
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </Link>
+                </div>
               </div>
             )}
           </div>
