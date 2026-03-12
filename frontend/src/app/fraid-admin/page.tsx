@@ -2,21 +2,24 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import ImageUploader from '@/components/ImageUploader';
+import FileUploader from '@/components/FileUploader';
 
 // Types
-type Project = { id: number; title: string; tech: string; category: string; description: string; imageUrl?: string; githubLink?: string; liveLink?: string };
-type Skill = { id: number; name: string; category: string; level?: string };
-type Message = { id: number; senderName: string; senderEmail: string; content: string; createdAt: string };
-type Tag = { id: number; name: string; type: 'TECH' | 'CATEGORY' };
-type Certificate = { id: number; title: string; issuer: string; date?: string; link?: string; imageUrl?: string };
-type Experience = { id: number; title: string; company?: string; location?: string; period: string; description: string; order: number };
+type Project = { id: string; title: string; tech: string; category: string; description: string; imageUrl?: string; githubLink?: string; liveLink?: string };
+type Skill = { id: string; name: string; category: string; level?: string };
+type Message = { id: string; senderName: string; senderEmail: string; content: string; createdAt: string };
+type Tag = { id: string; name: string; type: 'TECH' | 'CATEGORY' };
+type Certificate = { id: string; title: string; issuer: string; date?: string; link?: string; imageUrl?: string; pdfUrl?: string };
+type Experience = { id: string; title: string; company?: string; location?: string; period: string; description: string; order: number };
+type AdminProfile = { id?: string; name: string; photoUrl?: string; bio?: string; contactEmail?: string };
 
 export default function FraidAdmin() {
   const [adminKey, setAdminKey] = useState('');
   const [isMounted, setIsMounted] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
-  const [activeTab, setActiveTab] = useState<'projects' | 'skills' | 'messages' | 'tags' | 'certificates' | 'experiences'>('projects');
+  const [activeTab, setActiveTab] = useState<'projects' | 'skills' | 'messages' | 'tags' | 'certificates' | 'experiences' | 'profile'>('projects');
   const [status, setStatus] = useState({ message: '', type: '' });
 
   // Load key from localStorage on mount
@@ -93,10 +96,11 @@ export default function FraidAdmin() {
   const [tagForm, setTagForm] = useState<Partial<Tag>>({ type: 'TECH' });
   const [certForm, setCertForm] = useState<Partial<Certificate>>({});
   const [expForm, setExpForm] = useState<Partial<Experience>>({ order: 0 });
+  const [profileForm, setProfileForm] = useState<AdminProfile>({ name: '', photoUrl: '', bio: '', contactEmail: '' });
 
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
 
   const fetchData = async () => {
     if (!isVerified) return;
@@ -141,11 +145,11 @@ export default function FraidAdmin() {
   const getUrl = (endpoint: string, isEditing: boolean) =>
     isEditing ? `/api/${endpoint}/${editingId}` : `/api/${endpoint}`;
 
-  const getMethod = (isEditing: boolean) => isEditing ? 'PUT' : 'POST';
+  const getMethod = (isEditing: boolean) => isEditing ? (activeTab === 'profile' ? 'POST' : 'PUT') : 'POST';
 
 
 
-  const handleEdit = (id: number) => {
+  const handleEdit = (id: string) => {
     setEditingId(id);
     if (activeTab === 'projects') setProjectForm(projects.find(p => p.id === id) || {});
     else if (activeTab === 'skills') setSkillForm(skills.find(s => s.id === id) || {});
@@ -203,7 +207,7 @@ export default function FraidAdmin() {
     }
   };
 
-  const deleteTarget = async (endpoint: string, id: number) => {
+  const deleteTarget = async (endpoint: string, id: string) => {
     if (!confirm('Supprimer cet élément ?')) return;
     try {
       const res = await fetch(`/api/${endpoint}/${id}`, { method: 'DELETE', headers: { 'x-admin-key': adminKey } });
@@ -278,6 +282,7 @@ export default function FraidAdmin() {
             
             <h2 className="text-white font-bold mt-6 mb-2 uppercase tracking-wider text-sm">Configuration</h2>
             <button onClick={() => { setActiveTab('tags'); setEditingId(null); setTagForm({ type: 'TECH' }); }} className={`p-3 text-left outline-none rounded-xl transition ${activeTab === 'tags' ? 'bg-blue-600' : 'hover:bg-slate-800 text-slate-300'}`}>Tags & Catégories</button>
+            <button onClick={() => { setActiveTab('profile'); }} className={`p-3 text-left outline-none rounded-xl transition ${activeTab === 'profile' ? 'bg-blue-600' : 'hover:bg-slate-800 text-slate-300'}`}>Mon Profil Public</button>
             <button onClick={() => { setActiveTab('messages'); }} className={`p-3 text-left outline-none rounded-xl transition ${activeTab === 'messages' ? 'bg-blue-600' : 'hover:bg-slate-800 text-slate-300'}`}>Messages</button>
             
             <div className="mt-auto pt-10">
@@ -315,8 +320,13 @@ export default function FraidAdmin() {
                       <input type="text" required className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white focus:border-blue-500 outline-none transition" value={projectForm.title || ''} onChange={e => setProjectForm({...projectForm, title: e.target.value})} />
                     </div>
                     <div>
-                      <label className="block text-slate-400 mb-1 font-semibold">Image URL (Optionnel)</label>
-                      <input type="text" className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white focus:border-blue-500 outline-none transition" value={projectForm.imageUrl || ''} onChange={e => setProjectForm({...projectForm, imageUrl: e.target.value})} />
+                      <label className="block text-slate-400 mb-1 font-semibold">Capture d'écran (Supabase)</label>
+                      <ImageUploader 
+                        adminKey={adminKey}
+                        folder="projects-images"
+                        currentImageUrl={projectForm.imageUrl}
+                        onUploadSuccess={(url) => setProjectForm({...projectForm, imageUrl: url})}
+                      />
                     </div>
                   </div>
 
@@ -475,9 +485,22 @@ export default function FraidAdmin() {
                       <label className="block text-slate-400 mb-1 font-semibold">Lien de vérification / Badge (Optionnel)</label>
                       <input type="text" className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white" value={certForm.link || ''} onChange={e => setCertForm({...certForm, link: e.target.value})} />
                     </div>
-                    <div className="md:col-span-2">
-                      <label className="block text-slate-400 mb-1 font-semibold">URL de l'image (Optionnel)</label>
-                      <input type="text" className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white" value={certForm.imageUrl || ''} onChange={e => setCertForm({...certForm, imageUrl: e.target.value})} />
+                    <div>
+                      <label className="block text-slate-400 mb-1 font-semibold">Image du certificat</label>
+                      <ImageUploader 
+                        adminKey={adminKey}
+                        folder="certifications"
+                        currentImageUrl={certForm.imageUrl}
+                        onUploadSuccess={(url) => setCertForm({...certForm, imageUrl: url})}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-slate-400 mb-1 font-semibold">Fichier PDF (Optionnel)</label>
+                      <FileUploader 
+                        adminKey={adminKey}
+                        currentFileUrl={certForm.pdfUrl}
+                        onUploadSuccess={(url) => setCertForm({...certForm, pdfUrl: url})}
+                      />
                     </div>
                   </div>
                   
@@ -641,6 +664,45 @@ export default function FraidAdmin() {
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {activeTab === 'profile' && (
+              <div className="animate-in fade-in duration-300">
+                <h3 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+                  <span className="w-2 h-6 bg-blue-500 rounded-full inline-block"></span>
+                  Mon Profil Public
+                </h3>
+                <form onSubmit={(e) => handleSubmit(e, 'profile', profileForm)} className="space-y-6 bg-slate-800/20 p-6 rounded-2xl border border-slate-800">
+                  <div className="flex flex-col md:flex-row gap-8">
+                    <div className="w-full md:w-1/3">
+                      <label className="block text-slate-400 mb-2 font-semibold text-xs uppercase">Photo de Profil</label>
+                      <ImageUploader 
+                        adminKey={adminKey}
+                        folder="profile"
+                        currentImageUrl={profileForm.photoUrl}
+                        onUploadSuccess={(url) => setProfileForm({...profileForm, photoUrl: url})}
+                      />
+                    </div>
+                    <div className="flex-1 space-y-4">
+                      <div>
+                        <label className="block text-slate-400 mb-1 text-xs uppercase font-semibold">Nom Complet</label>
+                        <input type="text" className="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-white focus:border-blue-500 outline-none transition" value={profileForm.name || ''} onChange={e => setProfileForm({...profileForm, name: e.target.value})} placeholder="ex: Fraid..." />
+                      </div>
+                      <div>
+                        <label className="block text-slate-400 mb-1 text-xs uppercase font-semibold">Email de Contact Public</label>
+                        <input type="email" className="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-white focus:border-blue-500 outline-none transition" value={profileForm.contactEmail || ''} onChange={e => setProfileForm({...profileForm, contactEmail: e.target.value})} placeholder="votre@email.com" />
+                      </div>
+                      <div>
+                        <label className="block text-slate-400 mb-1 text-xs uppercase font-semibold">Bio Courte</label>
+                        <textarea className="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-white h-32 focus:border-blue-500 outline-none transition" value={profileForm.bio || ''} onChange={e => setProfileForm({...profileForm, bio: e.target.value})} placeholder="Dites-en un peu plus sur vous..." />
+                      </div>
+                    </div>
+                  </div>
+                  <button type="submit" className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-8 rounded-lg transition shadow-lg shadow-blue-500/20">
+                    Enregistrer le Profil
+                  </button>
+                </form>
               </div>
             )}
             
