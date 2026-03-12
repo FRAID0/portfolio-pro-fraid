@@ -7,12 +7,13 @@ import Link from 'next/link';
 type Project = { id: number; title: string; tech: string; category: string; description: string; imageUrl?: string; githubLink?: string; liveLink?: string };
 type Skill = { id: number; name: string; category: string; level?: string };
 type Message = { id: number; senderName: string; senderEmail: string; content: string; createdAt: string };
-type Tag = { id: number; name: string; type: string };
+type Tag = { id: number; name: string; type: 'TECH' | 'CATEGORY' };
 type Certificate = { id: number; title: string; issuer: string; date?: string; link?: string; imageUrl?: string };
+type Experience = { id: number; title: string; company?: string; location?: string; period: string; description: string; order: number };
 
-export default function AdminDashboard() {
+export default function FraidAdmin() {
   const [adminKey, setAdminKey] = useState('');
-  const [activeTab, setActiveTab] = useState<'projects' | 'skills' | 'messages' | 'tags' | 'certificates'>('projects');
+  const [activeTab, setActiveTab] = useState<'projects' | 'skills' | 'messages' | 'tags' | 'certificates' | 'experiences'>('projects');
   const [status, setStatus] = useState({ message: '', type: '' });
 
   // Data states
@@ -21,12 +22,14 @@ export default function AdminDashboard() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);
   const [certificates, setCertificates] = useState<Certificate[]>([]);
+  const [experiences, setExperiences] = useState<Experience[]>([]);
 
   // Form states
   const [projectForm, setProjectForm] = useState<Partial<Project>>({ category: '', tech: '' });
   const [skillForm, setSkillForm] = useState<Partial<Skill>>({ category: '' });
   const [tagForm, setTagForm] = useState<Partial<Tag>>({ type: 'TECH' });
   const [certForm, setCertForm] = useState<Partial<Certificate>>({});
+  const [expForm, setExpForm] = useState<Partial<Experience>>({ order: 0 });
 
   const [editingId, setEditingId] = useState<number | null>(null);
 
@@ -53,6 +56,9 @@ export default function AdminDashboard() {
       } else if (activeTab === 'certificates') {
         const res = await fetch(`/api/certificates`, { headers });
         if (res.ok) setCertificates(await res.json());
+      } else if (activeTab === 'experiences') {
+        const res = await fetch(`/api/experiences`, { headers });
+        if (res.ok) setExperiences(await res.json());
       }
     } catch (e) {
       console.error(e);
@@ -68,24 +74,61 @@ export default function AdminDashboard() {
     setTimeout(() => setStatus({ message: '', type: '' }), 3000);
   };
 
-  const getUrl = (endpoint: string, isEditing: boolean) => 
+  const getUrl = (endpoint: string, isEditing: boolean) =>
     isEditing ? `/api/${endpoint}/${editingId}` : `/api/${endpoint}`;
 
   const getMethod = (isEditing: boolean) => isEditing ? 'PUT' : 'POST';
 
-  const submitTarget = async (endpoint: string, formPayload: any, onSuccess: () => void) => {
+
+
+  const handleEdit = (id: number) => {
+    setEditingId(id);
+    if (activeTab === 'projects') setProjectForm(projects.find(p => p.id === id) || {});
+    else if (activeTab === 'skills') setSkillForm(skills.find(s => s.id === id) || {});
+    else if (activeTab === 'tags') setTagForm(tags.find(t => t.id === id) || { type: 'TECH' });
+    else if (activeTab === 'certificates') setCertForm(certificates.find(c => c.id === id) || {});
+    else if (activeTab === 'experiences') setExpForm(experiences.find(e => e.id === id) || { order: 0 });
+  };
+
+  const handleClearForm = () => {
+    setEditingId(null);
+    setProjectForm({ category: '', tech: '' });
+    setSkillForm({ category: '' });
+    setTagForm({ type: 'TECH' });
+    setCertForm({});
+    setExpForm({ order: 0 });
+  };
+
+  const handleSubmit = async (e?: React.FormEvent, customEndpoint?: string, customBody?: any) => {
+    if (e) e.preventDefault();
     const isEditing = editingId !== null;
+    
+    const endpoint = customEndpoint || (
+      activeTab === 'projects' ? 'projects' :
+      activeTab === 'skills' ? 'skills' :
+      activeTab === 'tags' ? 'tags' :
+      activeTab === 'certificates' ? 'certificates' :
+      'experiences'
+    );
+
+    const body = customBody || (
+      activeTab === 'projects' ? projectForm :
+      activeTab === 'skills' ? skillForm :
+      activeTab === 'tags' ? tagForm :
+      activeTab === 'certificates' ? certForm :
+      expForm
+    );
+
     try {
       const res = await fetch(getUrl(endpoint, isEditing), {
         method: getMethod(isEditing),
         headers: { 'Content-Type': 'application/json', 'x-admin-key': adminKey },
-        body: JSON.stringify(formPayload),
+        body: JSON.stringify(body),
       });
 
       if (res.ok) {
         handleShowMessage(`Opération réussie ! ✅`, 'success');
-        onSuccess();
-        setEditingId(null);
+        handleClearForm();
         fetchData();
       } else {
         const errorData = await res.json();
@@ -147,7 +190,8 @@ export default function AdminDashboard() {
             <h2 className="text-white font-bold mb-4 uppercase tracking-wider text-sm">Contenu</h2>
             <button onClick={() => { setActiveTab('projects'); setEditingId(null); setProjectForm({ category: '', tech: '' }); }} className={`p-3 text-left outline-none rounded-xl transition ${activeTab === 'projects' ? 'bg-blue-600' : 'hover:bg-slate-800 text-slate-300'}`}>Projets</button>
             <button onClick={() => { setActiveTab('skills'); setEditingId(null); setSkillForm({ category: '' }); }} className={`p-3 text-left outline-none rounded-xl transition ${activeTab === 'skills' ? 'bg-blue-600' : 'hover:bg-slate-800 text-slate-300'}`}>Compétences</button>
-            <button onClick={() => { setActiveTab('certificates'); setEditingId(null); setCertForm({}); }} className={`p-3 text-left outline-none rounded-xl transition ${activeTab === 'certificates' ? 'bg-blue-600' : 'hover:bg-slate-800 text-slate-300'}`}>Certificats</button>
+            <button onClick={() => { setActiveTab('certificates'); setEditingId(null); }} className={`p-4 text-left outline-none rounded-xl transition ${activeTab === 'certificates' ? 'bg-blue-600' : 'hover:bg-slate-800 text-slate-300'}`}>Certifications</button>
+            <button onClick={() => { setActiveTab('experiences'); setEditingId(null); }} className={`p-4 text-left outline-none rounded-xl transition ${activeTab === 'experiences' ? 'bg-blue-600' : 'hover:bg-slate-800 text-slate-300'}`}>Parcours</button>
             
             <h2 className="text-white font-bold mt-6 mb-2 uppercase tracking-wider text-sm">Configuration</h2>
             <button onClick={() => { setActiveTab('tags'); setEditingId(null); setTagForm({ type: 'TECH' }); }} className={`p-3 text-left outline-none rounded-xl transition ${activeTab === 'tags' ? 'bg-blue-600' : 'hover:bg-slate-800 text-slate-300'}`}>Tags & Catégories</button>
@@ -181,7 +225,7 @@ export default function AdminDashboard() {
                   <span className="w-2 h-6 bg-blue-500 rounded-full inline-block"></span>
                   {editingId ? 'Modifier' : 'Ajouter'} un Projet
                 </h3>
-                <form onSubmit={(e) => { e.preventDefault(); submitTarget('projects', projectForm, () => setProjectForm({ category: '', tech: '' })); }} className="space-y-6 text-sm mb-12 bg-slate-800/20 p-6 rounded-2xl border border-slate-800">
+                <form onSubmit={handleSubmit} className="space-y-6 text-sm mb-12 bg-slate-800/20 p-6 rounded-2xl border border-slate-800">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-slate-400 mb-1 font-semibold">Titre</label>
@@ -261,7 +305,7 @@ export default function AdminDashboard() {
                         </div>
                       </div>
                       <div className="flex gap-2">
-                        <button onClick={() => {setEditingId(p.id); setProjectForm(p);}} className="px-4 py-2 text-sm font-medium bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition">Éditer</button>
+                        <button onClick={() => handleEdit(p.id)} className="px-4 py-2 text-sm font-medium bg-slate-700 hover:bg-slate-600 text-white rounded-lg transition">Éditer</button>
                         <button onClick={() => deleteTarget('projects', p.id)} className="px-4 py-2 text-sm font-medium bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 rounded-lg transition">Supprimer</button>
                       </div>
                     </div>
@@ -279,7 +323,7 @@ export default function AdminDashboard() {
                 </h3>
                 <p className="text-slate-400 mb-6 text-sm">Créez tous les langages, frameworks et catégories ici. Ils seront disponibles sous forme de boutons cliquables dans la création des projets.</p>
                 
-                <form onSubmit={(e) => { e.preventDefault(); submitTarget('tags', tagForm, () => setTagForm({ type: 'TECH' })); }} className="space-y-4 text-sm mb-12 bg-slate-800/20 p-6 rounded-2xl border border-slate-800">
+                <form onSubmit={handleSubmit} className="space-y-4 text-sm mb-12 bg-slate-800/20 p-6 rounded-2xl border border-slate-800">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-slate-400 mb-1 font-semibold">Nom du Tag</label>
@@ -287,7 +331,7 @@ export default function AdminDashboard() {
                     </div>
                     <div>
                       <label className="block text-slate-400 mb-1 font-semibold">Type</label>
-                      <select required className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white focus:border-purple-500 outline-none" value={tagForm.type || 'TECH'} onChange={e => setTagForm({...tagForm, type: e.target.value})}>
+                      <select required className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white focus:border-purple-500 outline-none" value={tagForm.type || 'TECH'} onChange={e => setTagForm({...tagForm, type: e.target.value as Tag['type']})}>
                         <option value="TECH">Stack Technique (ex: Python)</option>
                         <option value="CATEGORY">Catégorie Générale (ex: Fullstack)</option>
                       </select>
@@ -330,7 +374,7 @@ export default function AdminDashboard() {
                   <span className="w-2 h-6 bg-yellow-500 rounded-full inline-block"></span>
                   {editingId ? 'Modifier' : 'Ajouter'} un Certificat
                 </h3>
-                <form onSubmit={(e) => { e.preventDefault(); submitTarget('certificates', certForm, () => setCertForm({})); }} className="space-y-4 text-sm mb-12 bg-slate-800/20 p-6 rounded-2xl border border-slate-800">
+                <form onSubmit={handleSubmit} className="space-y-4 text-sm mb-12 bg-slate-800/20 p-6 rounded-2xl border border-slate-800">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-slate-400 mb-1 font-semibold">Titre de la certification</label>
@@ -389,7 +433,7 @@ export default function AdminDashboard() {
                   <span className="w-2 h-6 bg-teal-500 rounded-full inline-block"></span>
                   {editingId ? 'Modifier' : 'Ajouter'} une Compétence
                 </h3>
-                <form onSubmit={(e) => { e.preventDefault(); submitTarget('skills', skillForm, () => setSkillForm({ category: '' })); }} className="space-y-6 text-sm mb-12 bg-slate-800/20 p-6 rounded-2xl border border-slate-800">
+                <form onSubmit={handleSubmit} className="space-y-6 text-sm mb-12 bg-slate-800/20 p-6 rounded-2xl border border-slate-800">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-slate-400 mb-1 font-semibold">Nom de la compétence (ex: React, Docker)</label>
@@ -443,6 +487,50 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                   ))}
+                </div>
+              </div>
+            )}
+
+            {activeTab === 'experiences' && (
+              <div className="space-y-12">
+                <section className="bg-slate-900/50 p-6 rounded-2xl border border-slate-800">
+                  <h3 className="text-xl font-bold text-white mb-6">{editingId ? 'Modifier l\'expérience' : 'Ajouter une expérience'}</h3>
+                  <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input type="text" placeholder="Titre (ex: Bachelor Informatique)" className="p-3 bg-slate-950 border border-slate-800 rounded-lg outline-none focus:border-blue-500 text-white" value={expForm.title || ''} onChange={e => setExpForm({ ...expForm, title: e.target.value })} required />
+                    <input type="text" placeholder="Entreprise / École" className="p-3 bg-slate-950 border border-slate-800 rounded-lg outline-none focus:border-blue-500 text-white" value={expForm.company || ''} onChange={e => setExpForm({ ...expForm, company: e.target.value })} />
+                    <input type="text" placeholder="Lieu (ex: Worms / Remote)" className="p-3 bg-slate-950 border border-slate-800 rounded-lg outline-none focus:border-blue-500 text-white" value={expForm.location || ''} onChange={e => setExpForm({ ...expForm, location: e.target.value })} />
+                    <input type="text" placeholder="Période (ex: 2023 - Présent)" className="p-3 bg-slate-950 border border-slate-800 rounded-lg outline-none focus:border-blue-500 text-white" value={expForm.period || ''} onChange={e => setExpForm({ ...expForm, period: e.target.value })} required />
+                    <input type="number" placeholder="Ordre (plus haut = plus en haut)" className="p-3 bg-slate-950 border border-slate-800 rounded-lg outline-none focus:border-blue-500 text-white" value={expForm.order || 0} onChange={e => setExpForm({ ...expForm, order: parseInt(e.target.value) })} />
+                    <textarea placeholder="Description" className="md:col-span-2 p-3 bg-slate-950 border border-slate-800 rounded-lg outline-none focus:border-blue-500 text-white h-32" value={expForm.description || ''} onChange={e => setExpForm({ ...expForm, description: e.target.value })} required />
+                    <div className="md:col-span-2 flex gap-4">
+                      <button type="submit" className="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-bold p-3 rounded-lg transition">{editingId ? 'Mettre à jour' : 'Ajouter au parcours'}</button>
+                      {editingId && <button type="button" onClick={handleClearForm} className="bg-slate-800 p-3 rounded-lg text-white">Annuler</button>}
+                    </div>
+                  </form>
+                </section>
+
+                <div className="grid grid-cols-1 gap-4">
+                  {experiences.map(exp => (
+                    <div key={exp.id} className="bg-slate-900/50 p-6 rounded-2xl border border-slate-800 flex justify-between items-center group">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-mono text-blue-500 uppercase">{exp.period}</span>
+                          <span className="bg-slate-800 text-[10px] px-2 py-0.5 rounded text-slate-400">Ordre: {exp.order}</span>
+                        </div>
+                        <h4 className="text-white font-bold text-lg">{exp.title}</h4>
+                        <p className="text-slate-500 text-sm">{exp.company} • {exp.location}</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <button onClick={() => handleEdit(exp.id)} className="p-2 bg-slate-800 hover:bg-blue-600 rounded-lg transition text-white">
+                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                        </button>
+                        <button onClick={() => deleteTarget('experiences', exp.id)} className="p-2 bg-slate-800 hover:bg-red-600 rounded-lg transition text-white">
+                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                  {experiences.length === 0 && <p className="text-center text-slate-500 italic">Aucune expérience enregistrée.</p>}
                 </div>
               </div>
             )}

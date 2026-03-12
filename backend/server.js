@@ -431,6 +431,71 @@ app.delete('/api/certificates/:id', adminRateLimit, checkAdmin, async (req, res)
   }
 });
 
+// --- ROUTES EXPERIENCES (PARCOURS) ---
+app.get('/api/experiences', async (req, res) => {
+  try {
+    const experiences = await prisma.experience.findMany({
+      orderBy: { order: 'desc' } // Reversed as requested (Practical at top if order is high)
+    });
+    res.json(experiences);
+  } catch (error) {
+    return res.status(500).json({ error: "Impossible de récupérer le parcours." });
+  }
+});
+
+app.post('/api/experiences', adminRateLimit, checkAdmin, async (req, res) => {
+  const { title, company, location, period, description, order } = req.body || {};
+  if (!title || !period || !description) return res.status(400).json({ error: "Titre, période et description requis." });
+  try {
+    const created = await prisma.experience.create({
+      data: {
+        title: String(title).trim(),
+        company: company ? String(company).trim() : null,
+        location: location ? String(location).trim() : null,
+        period: String(period).trim(),
+        description: String(description).trim(),
+        order: parseInt(order) || 0
+      }
+    });
+    return res.status(201).json(created);
+  } catch (error) {
+    return res.status(500).json({ error: "Erreur serveur lors de la création de l'expérience." });
+  }
+});
+
+app.put('/api/experiences/:id', adminRateLimit, checkAdmin, async (req, res) => {
+  const id = parseInt(req.params.id);
+  if (isNaN(id)) return res.status(400).json({ error: "ID invalide." });
+  const { title, company, location, period, description, order } = req.body || {};
+  try {
+    const updated = await prisma.experience.update({
+      where: { id },
+      data: {
+        ...(title && { title: String(title).trim() }),
+        ...(company !== undefined && { company: company ? String(company).trim() : null }),
+        ...(location !== undefined && { location: location ? String(location).trim() : null }),
+        ...(period && { period: String(period).trim() }),
+        ...(description && { description: String(description).trim() }),
+        ...(order !== undefined && { order: parseInt(order) || 0 })
+      }
+    });
+    return res.status(200).json(updated);
+  } catch (error) {
+    return res.status(500).json({ error: "Impossible de mettre à jour l'expérience." });
+  }
+});
+
+app.delete('/api/experiences/:id', adminRateLimit, checkAdmin, async (req, res) => {
+  const id = parseInt(req.params.id);
+  if (isNaN(id)) return res.status(400).json({ error: "ID invalide." });
+  try {
+    await prisma.experience.delete({ where: { id } });
+    return res.status(200).json({ success: true });
+  } catch (error) {
+    return res.status(500).json({ error: "Impossible de supprimer cette expérience." });
+  }
+});
+
 // Admin messages
 app.get('/api/messages', adminRateLimit, checkAdmin, async (req, res) => {
   try {

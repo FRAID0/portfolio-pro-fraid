@@ -1,165 +1,188 @@
-// About.tsx
 'use client';
 
+import { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
+import Link from 'next/link';
+
+interface Experience {
+  id: number;
+  title: string;
+  company?: string;
+  location?: string;
+  period: string;
+  description: string;
+  order: number;
+}
+
 export default function About() {
-  const experiences = [
-    {
-      date: "2023 – Present",
-      title: "Bachelor en Informatique Appliquée",
-      location: "Hochschule Worms, Allemagne",
-      description:
-        "Études focalisées sur génie logiciel, systèmes distribués et Cloud. Cours clés : bases de données, architecture logicielle, DevOps, sécurité.",
-    },
-    {
-      date: "2024",
-      title: "Développeur Full-Stack (projets académiques & perso)",
-      location: "Worms / Remote",
-      description:
-        "Réalisation de projets Web et mobile : frontend (React/Next.js, Angular, Flutter), backend Node.js/Express, ORM Sequelize. Exemples : SkillBridge (plateforme de mise en relation), prototype IoT (Sudoku connecté) et application mobile.",
-    },
-    {
-      date: "2025 (Praktikum)",
-      title: "Praktikant - PWO AG (DevOps / Automation)",
-      location: "PWO / Onsite",
-      description:
-        "Participation à l'automatisation des processus : création de scripts d'automatisation SQL, intégration CI/CD (Azure DevOps), prototype d'interface Web pour gestion de références et déploiement d'un pipeline de tests.",
-    },
-  ];
+  const [experiences, setExperiences] = useState<Experience[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/experiences')
+      .then(res => res.json())
+      .then(data => {
+        // Le backend renvoie déjà trié par 'order desc'
+        setExperiences(data);
+        setIsLoading(false);
+      })
+      .catch(err => {
+        console.error('Erreur SQL Experiences:', err);
+        setIsLoading(false);
+      });
+  }, []);
 
   return (
-    <div className="relative min-h-screen bg-slate-950 pt-24 pb-20">
-      {/* Glow de fond */}
-      <div className="absolute top-0 right-0 w-75 h-75 bg-blue-600/10 blur-[120px] -z-10" />
+    <div className="relative min-h-screen bg-slate-950 pt-32 pb-24 overflow-hidden">
+      {/* Glow de fond pour un aspect premium */}
+      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-600/5 rounded-full blur-[120px] -z-10" />
+      <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-purple-600/5 rounded-full blur-[120px] -z-10" />
 
-      <div className="mx-auto max-w-5xl px-6 lg:px-8">
+      <div className="mx-auto max-w-6xl px-6 lg:px-8">
         {/* --- Header --- */}
-        <section className="mb-20 text-center lg:text-left">
-          <h1 className="text-4xl font-extrabold text-white mb-6 lg:text-5xl">
-            À propos de <span className="text-blue-500">Wilfried</span>
-          </h1>
-          <p className="text-lg text-slate-400 leading-relaxed max-w-3xl">
-            Étudiant en <span className="text-white font-medium">Angewandte Informatik</span> à la Hochschule Worms,
-            passionné par le développement Full-Stack, l'automatisation et l'ingénierie Cloud. J'aime transformer des
-            problèmes complexes en solutions simples, robustes et maintenables.
-          </p>
+        <section className="mb-24 flex flex-col lg:flex-row gap-12 items-center lg:items-start text-center lg:text-left">
+          <div className="flex-1">
+            <motion.h1 
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="text-5xl lg:text-7xl font-extrabold text-white mb-8 tracking-tight"
+            >
+              À propos de <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-600">Wilfried</span>
+            </motion.h1>
+            <motion.p 
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="text-xl text-slate-400 leading-relaxed font-light mb-8"
+            >
+              Étudiant en <span className="text-white font-medium">Angewandte Informatik</span> à la Hochschule Worms,
+              passionné par le développement Full-Stack, l&apos;automatisation et l&apos;ingénierie Cloud. J&apos;aime transformer des
+              problèmes complexes en solutions simples, robustes et maintenables.
+            </motion.p>
 
-          {/* Contact / disponibilité rapide */}
-          <div className="mt-6 text-sm text-slate-400">
-            <span className="mr-4">📍 Mannheim</span>
-            <span className="mr-4">✉️ 5667tom@gmail.com</span>
-            <span>📞 0151 000 40050</span>
+            <motion.div 
+               initial={{ opacity: 0 }}
+               animate={{ opacity: 1 }}
+               transition={{ delay: 0.4 }}
+               className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-sm text-slate-500 font-mono uppercase tracking-widest border-t border-slate-900 pt-8"
+            >
+              <div className="flex flex-col gap-1">
+                <span className="text-blue-500 font-bold">Localisation</span>
+                Mannheim, DE
+              </div>
+              <div className="flex flex-col gap-1">
+                <span className="text-blue-500 font-bold">Diplôme</span>
+                Bachelor Info.
+              </div>
+              <div className="flex flex-col gap-1">
+                <span className="text-blue-500 font-bold">Focus</span>
+                Fullstack / Cloud
+              </div>
+            </motion.div>
           </div>
-          <p className="mt-3 text-sm text-slate-500">Disponible pour Praktikum, Werkstudent ou Bachelor-Thesis (à partir de Septembre).</p>
+          
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="w-full lg:w-1/3 aspect-square bg-slate-900 rounded-[3rem] border border-slate-800 p-2 flex items-center justify-center relative overflow-hidden group shadow-2xl"
+          >
+             <div className="absolute inset-0 bg-blue-500/10 group-hover:bg-blue-500/20 transition-all" />
+             <span className="text-8xl select-none grayscale group-hover:grayscale-0 transition-all duration-700">👨‍💻</span>
+             <div className="absolute bottom-4 left-4 right-4 p-4 bg-slate-950/80 backdrop-blur-md rounded-2xl border border-slate-800">
+                <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Disponible pour Septembre 2026</p>
+             </div>
+          </motion.div>
         </section>
 
         {/* --- Timeline Expériences --- */}
-        <section className="mb-24">
-          <h2 className="text-2xl font-bold text-white mb-10 flex items-center gap-4">
-            <span className="h-px w-12 bg-blue-500"></span>
-            Parcours & Expériences
-          </h2>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-20">
+          <div className="lg:col-span-2">
+            <h2 className="text-3xl font-bold text-white mb-12 flex items-center gap-4">
+              <span className="h-0.5 w-12 bg-blue-500"></span>
+              Parcours & Expériences
+            </h2>
 
-          <div className="space-y-12 border-l-2 border-slate-900 ml-4 pl-8 relative">
-            {experiences.map((exp, index) => (
-              <div key={index} className="relative">
-                <div className="absolute -left-10.25 top-1 w-4 h-4 rounded-full bg-blue-600 border-4 border-slate-950 shadow-[0_0_10px_rgba(37,99,235,0.5)]" />
-
-                <span className="text-xs font-mono text-blue-500 font-bold uppercase tracking-wider">
-                  {exp.date}
-                </span>
-                <h3 className="text-xl font-bold text-white mt-1">
-                  {exp.title}
-                </h3>
-                <p className="text-sm text-slate-500 mb-3">
-                  {exp.location}
-                </p>
-                <p className="text-slate-400 leading-relaxed max-w-2xl">
-                  {exp.description}
-                </p>
+            {isLoading ? (
+              <div className="space-y-12 animate-pulse">
+                {[1,2,3].map(i => (
+                  <div key={i} className="h-32 bg-slate-900/50 rounded-3xl border border-slate-800" />
+                ))}
               </div>
-            ))}
+            ) : experiences.length > 0 ? (
+              <div className="space-y-16 relative">
+                <div className="absolute left-6 top-0 bottom-0 w-px bg-gradient-to-b from-blue-500 via-slate-800 to-transparent" />
+                {experiences.map((exp) => (
+                  <motion.div 
+                    key={exp.id} 
+                    initial={{ opacity: 0, x: -10 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    viewport={{ once: true }}
+                    className="relative pl-16 group"
+                  >
+                    <div className="absolute left-4.5 top-1.5 w-3 h-3 rounded-full bg-slate-950 border-2 border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.5)] group-hover:bg-blue-500 transition-all duration-300" />
+                    
+                    <span className="text-xs font-mono text-blue-500 font-bold uppercase tracking-[0.2em] block mb-2">
+                      {exp.period}
+                    </span>
+                    <h3 className="text-2xl font-bold text-white mb-2 group-hover:text-blue-400 transition-colors">
+                      {exp.title}
+                    </h3>
+                    <div className="flex items-center gap-3 text-sm text-slate-500 mb-6 bg-slate-900/50 w-fit px-3 py-1 rounded-lg border border-slate-800/50">
+                      <span className="font-semibold text-slate-300">{exp.company}</span>
+                      <span className="w-1 h-1 rounded-full bg-slate-700" />
+                      <span>{exp.location}</span>
+                    </div>
+                    <p className="text-slate-400 leading-relaxed text-lg font-light">
+                      {exp.description}
+                    </p>
+                  </motion.div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-slate-500 italic">Aucun parcours disponible pour le moment.</p>
+            )}
           </div>
-        </section>
+
+          {/* Section Certifications & Links */}
+          <aside className="space-y-12">
+             <div className="p-8 bg-slate-900/40 border border-slate-800 rounded-[2.5rem] sticky top-32 backdrop-blur-sm">
+                <h3 className="text-xl font-bold text-white mb-6">Mes Certifications</h3>
+                <p className="text-slate-400 text-sm mb-8 leading-relaxed">
+                  Je complète régulièrement mon parcours académique par des certifications industrielles reconnues.
+                </p>
+                <Link 
+                  href="/certifications"
+                  className="group flex items-center justify-between p-4 bg-yellow-500 text-slate-950 font-bold rounded-2xl hover:scale-[1.02] transition-all"
+                >
+                  Consulter mes badges
+                  <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                  </svg>
+                </Link>
+                
+                <div className="mt-12 flex flex-col gap-4">
+                  <h4 className="text-xs font-mono text-slate-600 uppercase tracking-widest font-bold">Contact Rapide</h4>
+                  <a href="mailto:5667tom@gmail.com" className="text-slate-400 hover:text-white transition text-sm">5667tom@gmail.com</a>
+                  <a href="tel:015100040050" className="text-slate-400 hover:text-white transition text-sm">0151 000 40050</a>
+                </div>
+             </div>
+          </aside>
+        </div>
 
         {/* --- Skills Grid --- */}
-        <section className="mb-12">
-          <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-4">
-            <span className="h-px w-12 bg-purple-500"></span>
-            Compétences techniques 
+        <section className="mt-32">
+          <h2 className="text-3xl font-bold text-white mb-12 flex items-center gap-4">
+            <span className="h-0.5 w-12 bg-purple-500"></span>
+            Maîtrise Technique
           </h2>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            <SkillCard
-              title="Langages"
-              skills={["TypeScript", "Python", "JavaScript"]}
-              color="blue"
-            />
-            <SkillCard
-              title="Frontend"
-              skills={["React / Next.js", "Angular", "Tailwind CSS", "Flutter"]}
-              color="purple"
-            />
-            <SkillCard
-              title="Backend"
-              skills={["Node.js", "Express", "FASTAPI", "Sequelize / ORM"]}
-              color="indigo"
-            />
-            <SkillCard
-              title="Bases de données"
-              skills={["PostgreSQL", "MySQL", "MS-SQL", "SQLite"]}
-              color="blue"
-            />
-            <SkillCard
-              title="DevOps & Cloud"
-              skills={["Docker", "Azure DevOps", "CI/CD", "MLOps (Grundlagen)"]}
-              color="purple"
-            />
-            <SkillCard
-              title="Outils & Méthodes"
-              skills={["Git", "REST APIs", "Mockups (Figma/Sketch)", "Agile / Scrum"]}
-              color="indigo"
-            />
-          </div>
-        </section>
-
-        {/* --- Projets sélectionnés --- */}
-        <section>
-          <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-4">
-            <span className="h-px w-12 bg-green-500"></span>
-            Projets sélectionnés
-          </h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <ProjectCard
-              title="SkillBridge — Plateforme de mise en relation"
-              bullets={[
-                "Plateforme full-stack (auth, profils, gestion des compétences)",
-                "Frontend Angular/React, Backend Node.js + Sequelize, PostgreSQL",
-                "Focus sécurité, tests et workflows CI basiques",
-              ]}
-            />
-            <ProjectCard
-              title="Automatisation & DevOps (PWO Internship)"
-              bullets={[
-                "Automatisation des comparaisons Ist⇄Soll (SQL + option Python)",
-                "Mise en place de pipelines Azure DevOps, documentation de déploiement",
-                "Prototype d'interface Web pour gestion de références",
-              ]}
-            />
-            <ProjectCard
-              title="Workshop-Management (TOP Projekt)"
-              bullets={[
-                "Webapp pour gestion du cycle des workshops (Anfrage → Genehmigung → Veröffentlichung)",
-                "Backend Node.js, PostgreSQL, upload de documents, gestion des rôles",
-              ]}
-            />
-            <ProjectCard
-              title="IoT & Mobile (projet university)"
-              bullets={[
-                "Prototype Sudoku connecté (IoT) et application mobile Flutter",
-                "Intégration capteurs simple + backend minimal pour échanges",
-              ]}
-            />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            <SkillCard title="Langages" skills={["TypeScript", "Python", "JavaScript", "SQL"]} color="blue" />
+            <SkillCard title="Frontend" skills={["React / Next.js", "Angular", "Tailwind CSS", "Flutter"]} color="purple" />
+            <SkillCard title="Backend" skills={["Node.js", "Express", "FASTAPI", "ORM Sequelize/Prisma"]} color="indigo" />
+            <SkillCard title="Infrastructure" skills={["Docker", "Azure DevOps", "CI/CD Pipelines", "Supabase"]} color="blue" />
+            <SkillCard title="Data & Cloud" skills={["PostgreSQL", "AWS Grundlagen", "Git / GitHub", "Linux CLI"]} color="purple" />
+            <SkillCard title="Soft Skills" skills={["Agile (SCRUM)", "Figma Design", "Technical Writing", "Problem Solving"]} color="indigo" />
           </div>
         </section>
       </div>
@@ -167,32 +190,19 @@ export default function About() {
   );
 }
 
-function SkillCard({
-  title,
-  skills,
-  color,
-}: {
-  title: string;
-  skills: string[];
-  color: string;
-}) {
+function SkillCard({ title, skills, color }: { title: string; skills: string[]; color: string }) {
   const colorMap: Record<string, string> = {
-    blue: "border-blue-500/20 text-blue-400",
-    purple: "border-purple-500/20 text-purple-400",
-    indigo: "border-indigo-500/20 text-indigo-400",
+    blue: "border-blue-500/10 hover:border-blue-500/30 text-blue-400 bg-blue-500/5",
+    purple: "border-purple-500/10 hover:border-purple-500/30 text-purple-400 bg-purple-500/5",
+    indigo: "border-indigo-500/10 hover:border-indigo-500/30 text-indigo-400 bg-indigo-500/5",
   };
 
   return (
-    <div
-      className={`p-6 rounded-2xl bg-slate-900/40 border ${colorMap[color]} backdrop-blur-sm`}
-    >
-      <h3 className="text-white font-bold mb-4">{title}</h3>
-      <div className="flex flex-wrap gap-2">
+    <div className={`p-8 rounded-[2rem] border ${colorMap[color]} backdrop-blur-sm transition-all duration-500 group`}>
+      <h3 className="text-white font-bold mb-6 text-lg">{title}</h3>
+      <div className="flex flex-wrap gap-2 text-sm">
         {skills.map((skill) => (
-          <span
-            key={skill}
-            className="px-3 py-1 bg-slate-950 rounded-lg text-xs font-medium border border-slate-800"
-          >
+          <span key={skill} className="px-3 py-1.5 bg-slate-950 rounded-xl border border-slate-900 group-hover:border-slate-800 transition-colors">
             {skill}
           </span>
         ))}
@@ -201,15 +211,3 @@ function SkillCard({
   );
 }
 
-function ProjectCard({ title, bullets }: { title: string; bullets: string[] }) {
-  return (
-    <div className="p-6 rounded-2xl bg-slate-900/30 border border-slate-800">
-      <h4 className="text-white font-semibold mb-2">{title}</h4>
-      <ul className="list-disc list-inside text-slate-400">
-        {bullets.map((b, i) => (
-          <li key={i}>{b}</li>
-        ))}
-      </ul>
-    </div>
-  );
-}
