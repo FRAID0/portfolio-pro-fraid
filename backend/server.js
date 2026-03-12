@@ -3,8 +3,12 @@ const cors = require('cors');
 const nodemailer = require('nodemailer'); // Importé pour l'envoi d'emails
 require('dotenv').config();
 const { PrismaClient } = require('@prisma/client');
+const { createClient } = require('@supabase/supabase-js');
+const multer = require('multer');
 
 const prisma = new PrismaClient();
+const supabase = createClient(process.env.SUPABASE_URL || '', process.env.SUPABASE_ANON_KEY || '');
+const upload = multer({ storage: multer.memoryStorage() });
 const app = express();
 const port = process.env.PORT || 5000;
 
@@ -181,6 +185,83 @@ app.get('/api/admin/verify', adminRateLimit, checkAdmin, (req, res) => {
   res.status(200).json({ valid: true });
 });
 
+// --- ROUTES UPLOAD SUPABASE ---
+
+app.post('/api/upload/image', adminRateLimit, checkAdmin, upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: "Aucun fichier fourni." });
+    
+    const { folder = 'projects-images' } = req.body;
+    const fileExt = req.file.originalname.split('.').pop();
+    const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
+    const filePath = `${folder}/${fileName}`;
+
+    const { data, error } = await supabase.storage
+      .from('projects')
+      .upload(filePath, req.file.buffer, {
+        contentType: req.file.mimetype,
+        upsert: false
+      });
+
+    if (error) throw error;
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('projects')
+      .getPublicUrl(filePath);
+
+    res.json({ url: publicUrl });
+  } catch (error) {
+    console.error("Upload Error:", error);
+    res.status(500).json({ error: "Erreur lors de l'upload vers Supabase." });
+  }
+});
+
+app.post('/api/upload/document', adminRateLimit, checkAdmin, upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: "Aucun fichier fourni." });
+    
+    const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.pdf`;
+    const filePath = `documents/${fileName}`;
+
+    const { data, error } = await supabase.storage
+      .from('projects')
+      .upload(filePath, req.file.buffer, {
+        contentType: 'application/pdf',
+        upsert: false
+      });
+
+    if (error) throw error;
+
+    const { data: { publicUrl } } = supabase.storage
+      .from('projects')
+      .getPublicUrl(filePath);
+
+    res.json({ url: publicUrl });
+  } catch (error) {
+    console.error("Upload Error:", error);
+    res.status(500).json({ error: "Erreur lors de l'upload du document." });
+  }
+});
+
+app.delete('/api/upload', adminRateLimit, checkAdmin, async (req, res) => {
+  try {
+    const { url } = req.body;
+    if (!url) return res.status(400).json({ error: "URL requise." });
+
+    const parts = url.split('/projects/');
+    if (parts.length < 2) return res.status(400).json({ error: "URL invalide." });
+    
+    const filePath = parts[1];
+    const { error } = await supabase.storage.from('projects').remove([filePath]);
+
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: "Erreur lors de la suppression." });
+  }
+});
+
+
 // --- ROUTES PROJETS ---
 
 app.get('/api/projects', async (req, res) => {
@@ -198,11 +279,10 @@ app.get('/api/projects', async (req, res) => {
 
 app.get('/api/projects/:id', async (req, res) => {
   const { id } = req.params;
-  const projectId = parseInt(id);
-  if (isNaN(projectId)) return res.status(400).json({ error: "ID invalide." });
+  if (!id) return res.status(400).json({ error: "ID invalide." });
 
   try {
-    const project = await prisma.project.findUnique({ where: { id: projectId } });
+    const project = await prisma.project.findUnique({ where: { id } });
     if (!project) return res.status(404).json({ error: "Projet introuvable." });
 
     res.json({
@@ -249,11 +329,10 @@ app.post('/api/projects', adminRateLimit, checkAdmin, async (req, res) => {
 
 app.delete('/api/projects/:id', adminRateLimit, checkAdmin, async (req, res) => {
   const { id } = req.params;
-  const projectId = parseInt(id);
-  if (isNaN(projectId)) return res.status(400).json({ error: "ID invalide." });
+  if (!id) return res.status(400).json({ error: "ID invalide." });
 
   try {
-    await prisma.project.delete({ where: { id: projectId } });
+    await prisma.project.delete({ where: { id } });
     return res.status(200).json({ success: true });
   } catch (error) {
     console.error("Erreur Prisma (Delete Project):", error);
@@ -263,13 +342,12 @@ app.delete('/api/projects/:id', adminRateLimit, checkAdmin, async (req, res) => 
 
 app.put('/api/projects/:id', adminRateLimit, checkAdmin, async (req, res) => {
   const { id } = req.params;
-  const projectId = parseInt(id);
-  if (isNaN(projectId)) return res.status(400).json({ error: "ID invalide." });
+  if (!id) return res.status(400).json({ error: "ID invalide." });
 
   const { title, tech, category, description, imageUrl, githubLink, liveLink } = req.body || {};
   try {
     const updated = await prisma.project.update({
-      where: { id: projectId },
+      where: { id },
       data: {
         ...(title && { title: String(title).trim() }),
         ...(tech && { tech: String(tech).trim() }),
@@ -315,8 +393,8 @@ app.post('/api/skills', adminRateLimit, checkAdmin, async (req, res) => {
 });
 
 app.put('/api/skills/:id', adminRateLimit, checkAdmin, async (req, res) => {
-  const id = parseInt(req.params.id);
-  if (isNaN(id)) return res.status(400).json({ error: "ID invalide." });
+  const { id } = req.params;
+  if (!id) return res.status(400).json({ error: "ID invalide." });
   const { name, category, level } = req.body || {};
   try {
     const updated = await prisma.skill.update({
@@ -334,8 +412,8 @@ app.put('/api/skills/:id', adminRateLimit, checkAdmin, async (req, res) => {
 });
 
 app.delete('/api/skills/:id', adminRateLimit, checkAdmin, async (req, res) => {
-  const id = parseInt(req.params.id);
-  if (isNaN(id)) return res.status(400).json({ error: "ID invalide." });
+  const { id } = req.params;
+  if (!id) return res.status(400).json({ error: "ID invalide." });
   try {
     await prisma.skill.delete({ where: { id } });
     return res.status(200).json({ success: true });
@@ -371,8 +449,8 @@ app.post('/api/tags', adminRateLimit, checkAdmin, async (req, res) => {
 });
 
 app.delete('/api/tags/:id', adminRateLimit, checkAdmin, async (req, res) => {
-  const id = parseInt(req.params.id);
-  if (isNaN(id)) return res.status(400).json({ error: "ID invalide." });
+  const { id } = req.params;
+  if (!id) return res.status(400).json({ error: "ID invalide." });
   try {
     await prisma.tag.delete({ where: { id } });
     return res.status(200).json({ success: true });
@@ -413,8 +491,8 @@ app.post('/api/certificates', adminRateLimit, checkAdmin, async (req, res) => {
 });
 
 app.put('/api/certificates/:id', adminRateLimit, checkAdmin, async (req, res) => {
-  const id = parseInt(req.params.id);
-  if (isNaN(id)) return res.status(400).json({ error: "ID invalide." });
+  const { id } = req.params;
+  if (!id) return res.status(400).json({ error: "ID invalide." });
   const { title, issuer, date, link, imageUrl } = req.body || {};
   try {
     const updated = await prisma.certificate.update({
@@ -434,8 +512,8 @@ app.put('/api/certificates/:id', adminRateLimit, checkAdmin, async (req, res) =>
 });
 
 app.delete('/api/certificates/:id', adminRateLimit, checkAdmin, async (req, res) => {
-  const id = parseInt(req.params.id);
-  if (isNaN(id)) return res.status(400).json({ error: "ID invalide." });
+  const { id } = req.params;
+  if (!id) return res.status(400).json({ error: "ID invalide." });
   try {
     await prisma.certificate.delete({ where: { id } });
     return res.status(200).json({ success: true });
@@ -477,8 +555,8 @@ app.post('/api/experiences', adminRateLimit, checkAdmin, async (req, res) => {
 });
 
 app.put('/api/experiences/:id', adminRateLimit, checkAdmin, async (req, res) => {
-  const id = parseInt(req.params.id);
-  if (isNaN(id)) return res.status(400).json({ error: "ID invalide." });
+  const { id } = req.params;
+  if (!id) return res.status(400).json({ error: "ID invalide." });
   const { title, company, location, period, description, order } = req.body || {};
   try {
     const updated = await prisma.experience.update({
@@ -499,8 +577,8 @@ app.put('/api/experiences/:id', adminRateLimit, checkAdmin, async (req, res) => 
 });
 
 app.delete('/api/experiences/:id', adminRateLimit, checkAdmin, async (req, res) => {
-  const id = parseInt(req.params.id);
-  if (isNaN(id)) return res.status(400).json({ error: "ID invalide." });
+  const { id } = req.params;
+  if (!id) return res.status(400).json({ error: "ID invalide." });
   try {
     await prisma.experience.delete({ where: { id } });
     return res.status(200).json({ success: true });
@@ -526,15 +604,44 @@ app.get('/api/messages', adminRateLimit, checkAdmin, async (req, res) => {
 
 app.delete('/api/messages/:id', adminRateLimit, checkAdmin, async (req, res) => {
   const { id } = req.params;
-  const messageId = parseInt(id);
-  if (isNaN(messageId)) return res.status(400).json({ error: "ID invalide." });
+  if (!id) return res.status(400).json({ error: "ID invalide." });
 
   try {
-    await prisma.message.delete({ where: { id: messageId } });
+    await prisma.message.delete({ where: { id } });
     return res.status(200).json({ success: true });
   } catch (error) {
     console.error("Erreur Prisma (Delete Message):", error);
     return res.status(500).json({ error: "Impossible de supprimer le message." });
+  }
+});// --- ROUTES ADMIN PROFILE ---
+
+app.get('/api/profile', async (req, res) => {
+  try {
+    const profile = await prisma.adminProfile.findFirst();
+    res.json(profile || {});
+  } catch (error) {
+    res.status(500).json({ error: "Erreur lors de la récupération du profil." });
+  }
+});
+
+app.post('/api/profile', adminRateLimit, checkAdmin, async (req, res) => {
+  const { name, photoUrl, bio, contactEmail } = req.body || {};
+  try {
+    const existing = await prisma.adminProfile.findFirst();
+    let profile;
+    if (existing) {
+      profile = await prisma.adminProfile.update({
+        where: { id: existing.id },
+        data: { name, photoUrl, bio, contactEmail }
+      });
+    } else {
+      profile = await prisma.adminProfile.create({
+        data: { name, photoUrl, bio, contactEmail }
+      });
+    }
+    res.json(profile);
+  } catch (error) {
+    res.status(500).json({ error: "Erreur lors de la mise à jour du profil." });
   }
 });
 

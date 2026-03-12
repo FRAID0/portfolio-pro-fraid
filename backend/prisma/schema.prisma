@@ -11,12 +11,12 @@ datasource db {
 
 // 1. Table des Projets (Optimisée pour l'affichage et l'admin)
 model Project {
-  id          Int      @id @default(autoincrement())
+  id          String   @id @default(uuid())
   title       String
   description String
-  category    String   // Pour filtrer par IoT, Mobile, Fullstack
-  tech        String   // On repasse en String simple pour plus de flexibilité avec ton formulaire actuel
-  imageUrl    String?  // Axe 2 : Pour tes captures d'écran
+  category    String   
+  tech        String   
+  imageUrl    String?  
   githubLink  String?  
   liveLink    String?
   createdAt   DateTime @default(now())
@@ -26,17 +26,17 @@ model Project {
 
 // 2. Table des Compétences (Pour la page About dynamique)
 model Skill {
-  id       Int     @id @default(autoincrement())
+  id       String  @id @default(uuid())
   name     String
-  category String  // ex: "Langages", "Frameworks", "DevOps"
-  level    String? // ex: "Avancé", "Intermédiaire"
+  category String  
+  level    String? 
 
   @@map("skills")
 }
 
 // 3. Table des Messages (Pour ton futur formulaire de contact)
 model Message {
-  id          Int      @id @default(autoincrement())
+  id          String   @id @default(uuid())
   senderName  String
   senderEmail String
   content     String
@@ -48,16 +48,16 @@ model Message {
 
 // 4. Table des Tags (Pour sélections dynamiques type LinkedIn)
 model Tag {
-  id    Int     @id @default(autoincrement())
+  id    String  @id @default(uuid())
   name  String  @unique
-  type  String  // Enum-like string "TECH" ou "CATEGORY"
+  type  String  
 
   @@map("tags")
 }
 
 // 5. Table des Certificats
 model Certificate {
-  id        Int      @id @default(autoincrement())
+  id        String   @id @default(uuid())
   title     String
   issuer    String
   date      String?  
@@ -70,7 +70,7 @@ model Certificate {
 
 // 6. Table des Expériences
 model Experience {
-  id          Int      @id @default(autoincrement())
+  id          String   @id @default(uuid())
   title       String
   company     String?
   location    String?
@@ -78,4 +78,14 @@ model Experience {
   description String
   order       Int      @default(0)
   createdAt   DateTime @default(now())
+}
+
+// 7. Profil Admin
+model AdminProfile {
+  id           String  @id @default(uuid())
+  name         String
+  photoUrl     String?
+  bio          String?
+  contactEmail String?
+  createdAt    DateTime @default(now())
 }
