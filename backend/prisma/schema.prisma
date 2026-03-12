@@ -67,3 +67,15 @@ model Certificate {
 
   @@map("certificates")
 }
+
+// 6. Table des Expériences
+model Experience {
+  id          Int      @id @default(autoincrement())
+  title       String
+  company     String?
+  location    String?
+  period      String
+  description String
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+}
