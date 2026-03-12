@@ -13,8 +13,29 @@ type Experience = { id: number; title: string; company?: string; location?: stri
 
 export default function FraidAdmin() {
   const [adminKey, setAdminKey] = useState('');
+  const [isMounted, setIsMounted] = useState(false);
   const [activeTab, setActiveTab] = useState<'projects' | 'skills' | 'messages' | 'tags' | 'certificates' | 'experiences'>('projects');
   const [status, setStatus] = useState({ message: '', type: '' });
+
+  // Load key from localStorage on mount
+  useEffect(() => {
+    setIsMounted(true);
+    const savedKey = localStorage.getItem('fraid_admin_key');
+    if (savedKey) setAdminKey(savedKey);
+  }, []);
+
+  // Sync key to localStorage
+  const handleKeyChange = (val: string) => {
+    setAdminKey(val);
+    localStorage.setItem('fraid_admin_key', val);
+  };
+
+  const handleLogout = () => {
+    if (confirm('Se déconnecter ?')) {
+      setAdminKey('');
+      localStorage.removeItem('fraid_admin_key');
+    }
+  };
 
   // Data states
   const [projects, setProjects] = useState<Project[]>([]);
@@ -171,15 +192,27 @@ export default function FraidAdmin() {
       
       {/* Auth */}
       <div className="w-full max-w-5xl bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl mb-6">
-        <label htmlFor="adminKey" className="block text-blue-400 font-bold mb-2 uppercase text-xs">Clé Secrète Admin</label>
-        <input 
-          id="adminKey"
-          type="password" 
-          placeholder="Entrez votre clé secrète..."
-          className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-white outline-none focus:border-blue-500"
-          value={adminKey}
-          onChange={(e) => setAdminKey(e.target.value)}
-        />
+        <div className="flex gap-4">
+          <div className="flex-1">
+            <label htmlFor="adminKey" className="block text-blue-400 font-bold mb-2 uppercase text-xs">Clé Secrète Admin</label>
+            <input 
+              id="adminKey"
+              type="password" 
+              placeholder="Entrez votre clé secrète..."
+              className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-white outline-none focus:border-blue-500"
+              value={adminKey}
+              onChange={(e) => handleKeyChange(e.target.value)}
+            />
+          </div>
+          {adminKey && (
+            <button 
+              onClick={handleLogout}
+              className="mt-6 px-4 bg-red-500/10 hover:bg-red-500/20 text-red-500 border border-red-500/20 rounded-lg transition text-xs font-bold"
+            >
+              Déconnexion
+            </button>
+          )}
+        </div>
       </div>
 
       {adminKey && (

@@ -20,14 +20,20 @@ export default function About() {
 
   useEffect(() => {
     fetch('/api/experiences')
-      .then(res => res.json())
+      .then(async res => {
+        if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
+        const contentType = res.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+           throw new TypeError("Oops, we haven't got JSON!");
+        }
+        return res.json();
+      })
       .then(data => {
-        // Le backend renvoie déjà trié par 'order desc'
         setExperiences(data);
         setIsLoading(false);
       })
       .catch(err => {
-        console.error('Erreur SQL Experiences:', err);
+        console.error('Experiences Error:', err);
         setIsLoading(false);
       });
   }, []);
