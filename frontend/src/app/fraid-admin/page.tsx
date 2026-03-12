@@ -35,22 +35,22 @@ export default function AdminDashboard() {
     try {
       const headers = { 'x-admin-key': adminKey };
       if (activeTab === 'projects') {
-        const res = await fetch(`${apiUrl}/api/projects`, { headers });
+        const res = await fetch(`/api/projects`, { headers });
         if (res.ok) setProjects(await res.json());
         // Also fetch tags for the project form
-        const tagsRes = await fetch(`${apiUrl}/api/tags`, { headers });
+        const tagsRes = await fetch(`/api/tags`, { headers });
         if (tagsRes.ok) setTags(await tagsRes.json());
       } else if (activeTab === 'skills') {
-        const res = await fetch(`${apiUrl}/api/skills`, { headers });
+        const res = await fetch(`/api/skills`, { headers });
         if (res.ok) setSkills(await res.json());
       } else if (activeTab === 'messages') {
-        const res = await fetch(`${apiUrl}/api/messages`, { headers });
+        const res = await fetch(`/api/messages`, { headers });
         if (res.ok) setMessages(await res.json());
       } else if (activeTab === 'tags') {
-        const res = await fetch(`${apiUrl}/api/tags`, { headers });
+        const res = await fetch(`/api/tags`, { headers });
         if (res.ok) setTags(await res.json());
       } else if (activeTab === 'certificates') {
-        const res = await fetch(`${apiUrl}/api/certificates`, { headers });
+        const res = await fetch(`/api/certificates`, { headers });
         if (res.ok) setCertificates(await res.json());
       }
     } catch (e) {
@@ -68,7 +68,7 @@ export default function AdminDashboard() {
   };
 
   const getUrl = (endpoint: string, isEditing: boolean) => 
-    isEditing ? `${apiUrl}/api/${endpoint}/${editingId}` : `${apiUrl}/api/${endpoint}`;
+    isEditing ? `/api/${endpoint}/${editingId}` : `/api/${endpoint}`;
 
   const getMethod = (isEditing: boolean) => isEditing ? 'PUT' : 'POST';
 
@@ -98,7 +98,7 @@ export default function AdminDashboard() {
   const deleteTarget = async (endpoint: string, id: number) => {
     if (!confirm('Supprimer cet élément ?')) return;
     try {
-      const res = await fetch(`${apiUrl}/api/${endpoint}/${id}`, { method: 'DELETE', headers: { 'x-admin-key': adminKey } });
+      const res = await fetch(`/api/${endpoint}/${id}`, { method: 'DELETE', headers: { 'x-admin-key': adminKey } });
       if (res.ok) {
         handleShowMessage('Élément supprimé.', 'success');
         fetchData();
