@@ -14,6 +14,8 @@ type Experience = { id: number; title: string; company?: string; location?: stri
 export default function FraidAdmin() {
   const [adminKey, setAdminKey] = useState('');
   const [isMounted, setIsMounted] = useState(false);
+  const [isVerified, setIsVerified] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
   const [activeTab, setActiveTab] = useState<'projects' | 'skills' | 'messages' | 'tags' | 'certificates' | 'experiences'>('projects');
   const [status, setStatus] = useState({ message: '', type: '' });
 
@@ -21,18 +23,49 @@ export default function FraidAdmin() {
   useEffect(() => {
     setIsMounted(true);
     const savedKey = localStorage.getItem('fraid_admin_key');
-    if (savedKey) setAdminKey(savedKey);
+    if (savedKey) {
+      setAdminKey(savedKey);
+      checkVerification(savedKey);
+    }
   }, []);
+
+  const checkVerification = async (key: string) => {
+    if (!key) {
+      setIsVerified(false);
+      return;
+    }
+    setIsVerifying(true);
+    try {
+      const res = await fetch('/api/admin/verify', {
+        headers: { 'x-admin-key': key }
+      });
+      if (res.ok) {
+        setIsVerified(true);
+      } else {
+        setIsVerified(false);
+      }
+    } catch (e) {
+      setIsVerified(false);
+    } finally {
+      setIsVerifying(false);
+    }
+  };
 
   // Sync key to localStorage
   const handleKeyChange = (val: string) => {
     setAdminKey(val);
     localStorage.setItem('fraid_admin_key', val);
+    if (val.length >= 4) {
+      checkVerification(val);
+    } else {
+      setIsVerified(false);
+    }
   };
 
   const handleLogout = () => {
     if (confirm('Se déconnecter ?')) {
       setAdminKey('');
+      setIsVerified(false);
       localStorage.removeItem('fraid_admin_key');
     }
   };
@@ -57,6 +90,7 @@ export default function FraidAdmin() {
   const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
   const fetchData = async () => {
+    if (!isVerified) return;
     try {
       const headers = { 'x-admin-key': adminKey };
       if (activeTab === 'projects') {
@@ -87,8 +121,8 @@ export default function FraidAdmin() {
   };
 
   useEffect(() => {
-    if (adminKey) fetchData();
-  }, [activeTab, adminKey]);
+    if (isVerified) fetchData();
+  }, [activeTab, isVerified]);
 
   const handleShowMessage = (msg: string, type: 'success' | 'error') => {
     setStatus({ message: msg, type });
@@ -199,10 +233,13 @@ export default function FraidAdmin() {
               id="adminKey"
               type="password" 
               placeholder="Entrez votre clé secrète..."
-              className="w-full bg-slate-800 border border-slate-700 rounded p-2 text-white outline-none focus:border-blue-500"
+              className={`w-full bg-slate-800 border ${isVerifying ? 'border-blue-500/50' : adminKey && !isVerified ? 'border-red-500/50' : 'border-slate-700'} rounded p-2 text-white outline-none transition`}
               value={adminKey}
               onChange={(e) => handleKeyChange(e.target.value)}
             />
+            {isVerifying && <span className="text-[10px] text-blue-400 mt-1 animate-pulse">Vérification...</span>}
+            {adminKey && !isVerified && !isVerifying && <span className="text-[10px] text-red-500 mt-1">Clé invalide ou accès refusé.</span>}
+            {isVerified && <span className="text-[10px] text-green-500 mt-1">Accès autorisé ✅</span>}
           </div>
           {adminKey && (
             <button 
@@ -215,7 +252,7 @@ export default function FraidAdmin() {
         </div>
       </div>
 
-      {adminKey && (
+      {!isMounted ? null : isVerified ? (
         <div className="w-full max-w-5xl bg-slate-900 border border-slate-800 rounded-2xl shadow-xl overflow-hidden flex flex-col md:flex-row">
           
           {/* Sidebar */}
@@ -595,6 +632,10 @@ export default function FraidAdmin() {
             )}
             
           </div>
+        </div>
+      ) : (
+        <div className="flex flex-col items-center gap-4 text-slate-500 italic animate-pulse">
+          <p>Veuillez entrer une clé valide pour débloquer l'administration.</p>
         </div>
       )}
     </div>
