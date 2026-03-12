@@ -168,6 +168,10 @@ const adminRateLimit = createRateLimiter({
   keyFn: (req) => `admin:${getClientIp(req)}`,
 });
 
+app.get('/api/admin/verify', adminRateLimit, checkAdmin, (req, res) => {
+  res.status(200).json({ valid: true });
+});
+
 // --- ROUTES PROJETS ---
 
 app.get('/api/projects', async (req, res) => {
