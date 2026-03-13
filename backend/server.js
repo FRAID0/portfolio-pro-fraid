@@ -32,36 +32,31 @@ const allowedOrigins = new Set([
   'http://localhost:3000',
 ]);
 
-// Debugging startup logs for Render
-console.log("--- Configuration CORS ---");
-console.log("CORS_ORIGINS:", process.env.CORS_ORIGINS);
-console.log("CORS_ALLOW_VERCEL_PREVIEW:", process.env.CORS_ALLOW_VERCEL_PREVIEW);
-console.log("--------------------------");
-
-// Configuration CORS (env-based)
+// Configuration CORS
 app.use(cors({
   origin: (origin, cb) => {
-    // 1. Autoriser les clients non-navigateurs (Postman, etc.)
+    // 1. Autoriser les requêtes serveur à serveur (pas d'origine)
     if (!origin) return cb(null, true);
 
-    // 2. Vérifier les origines explicites configurées
+    // 2. Vérifier les origines configurées (Set allowedOrigins)
     if (allowedOrigins.has(origin)) return cb(null, true);
 
-    // 3. Autoriser dynamiquement les previews et domaines Vercel liés au projet
-    // On est plus permissif ici pour éviter les blocages en prod
-    const isProjectVercelDomain = origin.includes('portfolio-pro-fraid') && origin.endsWith('.vercel.app');
-    const isVercelPreview = allowVercelPreviewOrigins && origin.endsWith('.vercel.app');
-
-    if (isProjectVercelDomain || isVercelPreview) {
+    // 3. Règle permissive pour Vercel (indispensable pour les previews)
+    if (origin.endsWith('.vercel.app')) {
       return cb(null, true);
     }
 
-    // 4. Bloquer et logger pour debug si besoin
+    // 4. Fallback pour le domaine principal si CORS_ORIGINS est mal lu sur Render
+    if (origin.includes('portfolio-pro-fraid')) {
+      return cb(null, true);
+    }
+
+    // Logger pour debug si une autre origine tente d'accéder
     console.warn(`[CORS] Origine bloquée : ${origin}`);
     return cb(null, false);
   },
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
-  allowedHeaders: ["Content-Type", "x-admin-key", "Origin"]
+  allowedHeaders: ["Content-Type", "x-admin-key", "Origin", "Accept"]
 }));
 
 function setSecurityHeaders(req, res, next) {
