@@ -35,13 +35,28 @@ const allowedOrigins = new Set([
 // Configuration CORS (env-based)
 app.use(cors({
   origin: (origin, cb) => {
-    if (!origin) return cb(null, true); // non-browser clients
+    // 1. Autoriser les clients non-navigateurs (Postman, etc.)
+    if (!origin) return cb(null, true);
+
+    // 2. Vérifier les origines explicites configurées
     if (allowedOrigins.has(origin)) return cb(null, true);
-    if (allowVercelPreviewOrigins && origin.endsWith('.vercel.app')) return cb(null, true);
+
+    // 3. Autoriser dynamiquement les previews Vercel
+    const isVercelPreview = allowVercelPreviewOrigins && (
+      origin.endsWith('.vercel.app') || 
+      /^https:\/\/portfolio-pro-fraid-.*\.vercel\.app$/.test(origin)
+    );
+
+    if (isVercelPreview) {
+      return cb(null, true);
+    }
+
+    // 4. Bloquer et logger pour debug si besoin
+    console.warn(`[CORS] Origine bloquée : ${origin}`);
     return cb(null, false);
   },
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
-  allowedHeaders: ["Content-Type", "x-admin-key"]
+  allowedHeaders: ["Content-Type", "x-admin-key", "Origin"]
 }));
 
 function setSecurityHeaders(req, res, next) {
