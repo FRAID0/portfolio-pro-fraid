@@ -1,44 +1,99 @@
-const { sendEmail } = require('../services/emailService');
+const { sendEmail, transporter } = require('../services/emailService');
 
+/**
+ * Soumission du formulaire de contact
+ * Gère la validation, l'envoi à l'admin et la confirmation à l'utilisateur.
+ */
 exports.submitContactForm = async (req, res) => {
+  console.log("--- Nouvelle requête Contact ---");
+  console.log("Body reçu:", JSON.stringify({ ...req.body, email: "********" })); // On masque l'email complet pour les logs
+
   const { name, email, message } = req.body;
 
-  // Validation
+  // 1. Validation des champs
   if (!name || !email || !message) {
-    return res.status(400).json({ error: "Tous les champs sont requis (nom, email, message)." });
+    console.warn("Validation échouée: champs manquants.");
+    return res.status(400).json({ error: "Tous les champs (nom, email, message) sont obligatoires." });
+  }
+
+  // 2. Validation format email
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    console.warn(`Validation échouée: format email invalide (${email}).`);
+    return res.status(400).json({ error: "L'adresse email est invalide." });
+  }
+
+  // 3. Validation longueur message
+  if (message.length < 5) {
+    return res.status(400).json({ error: "Le message est trop court." });
   }
 
   try {
-    // 1. Send email to Admin
+    // Vérification du service email avant de commencer
+    console.log("Vérification de la connexion SMTP...");
+    await transporter.verify();
+    
+    // A. Envoi à l'Admin
+    console.log(`Envoi du message de ${name} à l'admin...`);
     await sendEmail({
       to: process.env.EMAIL_USER || '5667tom@gmail.com',
-      subject: "Nouveau message depuis le site",
-      text: `Nouveau message reçu:\n\nNom: ${name}\nEmail: ${email}\n\nMessage:\n${message}`
+      subject: `[PROJET PORTFOLIO] Nouveau message de ${name}`,
+      text: `Détails du message:\n\nNom: ${name}\nEmail: ${email}\n\nMessage:\n${message}`,
+      html: `
+        <h3>Nouveau message de contact</h3>
+        <p><strong>Nom:</strong> ${name}</p>
+        <p><strong>Email:</strong> ${email}</p>
+        <p><strong>Message:</strong></p>
+        <div style="padding: 15px; background: #f4f4f4; border-radius: 5px;">
+          ${message.replace(/\n/g, '<br>')}
+        </div>
+      `
     });
 
-    // 2. Send confirmation to User
+    // B. Envoi de confirmation à l'Utilisateur
+    console.log(`Envoi de la confirmation à ${email}...`);
     await sendEmail({
       to: email,
-      subject: "Votre message a bien été reçu",
-      text: `Bonjour ${name},\n\nMerci pour votre message.\nNous vous répondrons dans les plus brefs délais.\n\nCordialement,\nL'équipe FRAID`
+      subject: "Confirmation de réception - Portfolio FRAID",
+      text: `Bonjour ${name},\n\nJ'ai bien reçu votre message et je vous remercie de m'avoir contacté. Je reviendrai vers vous très prochainement.\n\nCordialement,\nFRAID`,
+      html: `
+        <h3>Bonjour ${name},</h3>
+        <p>Merci pour votre message ! Je l'ai bien reçu et je vous répondrai dans les plus brefs délais.</p>
+        <p>A bientôt,</p>
+        <p><strong>FRAID</strong></p>
+      `
     });
 
-    res.status(200).json({ message: "Message envoyé avec succès" });
+    console.log("Flux de contact terminé avec succès.");
+    res.status(200).json({ success: true, message: "Message envoyé ! Je vous répondrai bientôt." });
+
   } catch (error) {
-    console.error("Contact Controller Error:", error);
-    res.status(500).json({ error: "Impossible d'envoyer le message" });
+    console.error("ERREUR CRITIQUE CONTACT:", error.message);
+    console.error("Stack trace:", error.stack);
+
+    // Détection d'erreurs SMTP spécifiques (Auth, Timeout...)
+    if (error.code === 'EAUTH') {
+      return res.status(500).json({ error: "Erreur d'authentification serveur (SMTP)." });
+    }
+
+    res.status(500).json({ error: "Une erreur interne est survenue lors de l'envoi." });
   }
 };
 
+/**
+ * Route de test SMTP rapide
+ */
 exports.testEmail = async (req, res) => {
+  console.log("Lancement du test email...");
   try {
     await sendEmail({
       to: process.env.EMAIL_USER || '5667tom@gmail.com',
-      subject: "Test email Render",
-      text: "Si vous recevez ce message, le SMTP fonctionne."
+      subject: "🚀 TEST RENDER SMTP",
+      text: "Si tu lis ceci, ton backend est correctement configuré pour Gmail."
     });
-    res.status(200).json({ message: "Test email envoyé avec succès" });
+    res.status(200).json({ success: true, message: "Email de test envoyé !" });
   } catch (error) {
-    res.status(500).json({ error: "Échec de l'envoi du test email" });
+    console.error("Echec du test SMTP:", error);
+    res.status(500).json({ error: "SMTP Error: " + error.message });
   }
 };
