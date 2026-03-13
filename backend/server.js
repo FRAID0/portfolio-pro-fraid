@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
-const nodemailer = require('nodemailer'); // Importé pour l'envoi d'emails
+const nodemailer = require('nodemailer');
+const contactRoutes = require('./routes/contact');
 require('dotenv').config();
 const { PrismaClient } = require('@prisma/client');
 const { createClient } = require('@supabase/supabase-js');
@@ -63,24 +64,8 @@ app.use(express.json({ limit: '200kb' }));
 
 const ADMIN_KEY = process.env.ADMIN_SECRET_KEY;
 
-// Configuration du transporteur Nodemailer vers 5667tom@gmail.com
-// Security note: TLS verification must stay enabled in production. If you need a temporary workaround,
-// set SMTP_TLS_REJECT_UNAUTHORIZED=false (not recommended).
-const smtpTlsRejectUnauthorized = process.env.SMTP_TLS_REJECT_UNAUTHORIZED;
-const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 465,
-  secure: true, // Utilise SSL
-  auth: {
-    user: '5667tom@gmail.com',
-    pass: process.env.EMAIL_PASSWORD
-  },
-  tls: {
-    // Indispensable pour éviter les erreurs de certificat sur Render
-    rejectUnauthorized: smtpTlsRejectUnauthorized === 'false' ? false : true
-  },
-  connectionTimeout: 10000 // Augmente le délai à 10 secondes
-});
+// Email routes
+app.use('/api', contactRoutes);
 
 function normalizePath(path) {
   // Reduce high-cardinality metrics by normalizing obvious IDs.

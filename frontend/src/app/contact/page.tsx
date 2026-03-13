@@ -47,9 +47,10 @@ export default function ContactPage() {
 
       setStatus('success');
       (e.target as HTMLFormElement).reset();
-    } catch {
+    } catch (err) {
+      console.error("Submission error:", err);
       setStatus('error');
-      setErrorMsg("Impossible d'envoyer le message. Réessayez plus tard.");
+      setErrorMsg("Impossible d'envoyer le message");
     }
   };
 
@@ -121,6 +122,8 @@ export default function ContactPage() {
               ${
                 status === 'loading'
                   ? 'bg-gray-700 cursor-not-allowed'
+                  : status === 'success'
+                  ? 'bg-green-600 cursor-default'
                   : 'bg-blue-600 hover:bg-blue-500 shadow-lg shadow-blue-500/20'
               }`}
             >
@@ -129,6 +132,8 @@ export default function ContactPage() {
                   <span className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   Envoi…
                 </>
+              ) : status === 'success' ? (
+                'Message envoyé'
               ) : (
                 'Envoyer le message'
               )}
@@ -138,7 +143,7 @@ export default function ContactPage() {
             {status === 'success' && (
               <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-xl
               text-green-400 text-center font-medium">
-                ✅ Message envoyé avec succès. Merci !
+                ✅ Votre message a bien été envoyé. Merci !
               </div>
             )}
 
