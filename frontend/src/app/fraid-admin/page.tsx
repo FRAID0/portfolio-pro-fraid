@@ -127,6 +127,12 @@ export default function FraidAdmin() {
       } else if (activeTab === 'experiences') {
         const res = await fetch('/api/experiences', { headers });
         if (res.ok) setExperiences(await res.json());
+      } else if (activeTab === 'profile') {
+        const res = await fetch('/api/profile', { headers });
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.name) setProfileForm(data);
+        }
       }
     } catch (e) {
       console.error(e);
