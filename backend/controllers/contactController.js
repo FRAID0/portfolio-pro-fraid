@@ -73,7 +73,10 @@ exports.submitContactForm = async (req, res) => {
 
     // Détection d'erreurs SMTP spécifiques (Auth, Timeout...)
     if (error.code === 'EAUTH') {
-      return res.status(500).json({ error: "Erreur d'authentification serveur (SMTP)." });
+      return res.status(500).json({ error: "Erreur d'authentification SMTP. Vérifie ton Mot de passe d'application Gmail." });
+    }
+    if (error.code === 'ETIMEDOUT' || error.message.includes('timeout')) {
+      return res.status(500).json({ error: "Le serveur de mail met trop de temps à répondre (Timeout). Réessaie plus tard." });
     }
 
     res.status(500).json({ error: "Une erreur interne est survenue lors de l'envoi." });
