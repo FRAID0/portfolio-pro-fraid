@@ -32,6 +32,12 @@ const allowedOrigins = new Set([
   'http://localhost:3000',
 ]);
 
+// Debugging startup logs for Render
+console.log("--- Configuration CORS ---");
+console.log("CORS_ORIGINS:", process.env.CORS_ORIGINS);
+console.log("CORS_ALLOW_VERCEL_PREVIEW:", process.env.CORS_ALLOW_VERCEL_PREVIEW);
+console.log("--------------------------");
+
 // Configuration CORS (env-based)
 app.use(cors({
   origin: (origin, cb) => {
@@ -41,13 +47,12 @@ app.use(cors({
     // 2. Vérifier les origines explicites configurées
     if (allowedOrigins.has(origin)) return cb(null, true);
 
-    // 3. Autoriser dynamiquement les previews Vercel
-    const isVercelPreview = allowVercelPreviewOrigins && (
-      origin.endsWith('.vercel.app') || 
-      /^https:\/\/portfolio-pro-fraid-.*\.vercel\.app$/.test(origin)
-    );
+    // 3. Autoriser dynamiquement les previews et domaines Vercel liés au projet
+    // On est plus permissif ici pour éviter les blocages en prod
+    const isProjectVercelDomain = origin.includes('portfolio-pro-fraid') && origin.endsWith('.vercel.app');
+    const isVercelPreview = allowVercelPreviewOrigins && origin.endsWith('.vercel.app');
 
-    if (isVercelPreview) {
+    if (isProjectVercelDomain || isVercelPreview) {
       return cb(null, true);
     }
 
