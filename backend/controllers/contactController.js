@@ -1,5 +1,6 @@
 const crypto = require('crypto');
 const { sendEmail, verifyEmailTransport, getEmailProviderName } = require('../services/emailService');
+const prisma = require('../lib/prisma');
 
 function containsLink(text) {
   if (!text) return false;
@@ -65,6 +66,22 @@ exports.submitContactForm = async (req, res) => {
     const safeNameHtml = escapeHtml(safeName);
     const safeEmailHtml = escapeHtml(safeEmail);
     const safeMessageHtml = escapeHtml(safeMessage).replace(/\n/g, '<br>');
+
+    // 0) Sauvegarde (best-effort) pour l'historique admin
+    try {
+      await prisma.message.create({
+        data: {
+          senderName: safeName,
+          senderEmail: safeEmail,
+          content: safeMessage,
+        },
+      });
+    } catch (dbError) {
+      console.warn(
+        `[contact:${requestId}] Sauvegarde DB échouée (non bloquant):`,
+        dbError && dbError.message ? dbError.message : dbError
+      );
+    }
 
     // A) Envoi à l'Admin (bloquant)
     console.log(`[contact:${requestId}] Envoi du message de "${safeName}" à l'admin...`);

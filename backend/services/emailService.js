@@ -74,14 +74,31 @@ async function sendViaResend(options) {
     reply_to: options.replyTo,
   };
 
-  const response = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(payload),
-  });
+  const timeoutMs = Number(process.env.RESEND_TIMEOUT_MS || 10000);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+  let response;
+  try {
+    response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    });
+  } catch (err) {
+    if (err && (err.name === 'AbortError' || err.code === 'ABORT_ERR')) {
+      const error = new Error(`Resend API timeout after ${timeoutMs}ms`);
+      error.code = 'ETIMEDOUT';
+      throw error;
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeout);
+  }
 
   if (!response.ok) {
     let bodyText = '';

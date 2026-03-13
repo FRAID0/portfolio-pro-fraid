@@ -2,11 +2,11 @@ const express = require('express');
 const cors = require('cors');
 const contactRoutes = require('./routes/contact');
 require('dotenv').config();
-const { PrismaClient } = require('@prisma/client');
 const { createClient } = require('@supabase/supabase-js');
 const multer = require('multer');
+const prisma = require('./lib/prisma');
+const { createRateLimiter, getClientIp } = require('./middleware/rateLimiter');
 
-const prisma = new PrismaClient();
 const supabase = createClient(process.env.SUPABASE_URL || '', process.env.SUPABASE_ANON_KEY || '');
 const upload = multer({ storage: multer.memoryStorage() });
 const app = express();
@@ -131,7 +131,7 @@ const checkAdmin = (req, res, next) => {
   }
 };
 
-function createRateLimiter({ windowMs, max, keyFn }) {
+function createRateLimiterLegacy({ windowMs, max, keyFn }) {
   const hits = new Map(); // key -> { resetAt, count }
 
   return (req, res, next) => {
@@ -155,22 +155,6 @@ function createRateLimiter({ windowMs, max, keyFn }) {
     return next();
   };
 }
-
-function getClientIp(req) {
-  return req.ip || (req.connection && req.connection.remoteAddress) || 'unknown';
-}
-
-function containsLink(text) {
-  if (!text) return false;
-  const linkRegex = /(https?:\/\/|www\.|<a\s|mailto:)/gi;
-  return linkRegex.test(text);
-}
-
-const contactRateLimit = createRateLimiter({
-  windowMs: 15 * 60 * 1000,
-  max: 20,
-  keyFn: (req) => `contact:${getClientIp(req)}`,
-});
 
 const adminRateLimit = createRateLimiter({
   windowMs: 1 * 60 * 1000,
