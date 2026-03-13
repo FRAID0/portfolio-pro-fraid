@@ -1,6 +1,5 @@
 const express = require('express');
 const cors = require('cors');
-const nodemailer = require('nodemailer');
 const contactRoutes = require('./routes/contact');
 require('dotenv').config();
 const { PrismaClient } = require('@prisma/client');
@@ -12,6 +11,7 @@ const supabase = createClient(process.env.SUPABASE_URL || '', process.env.SUPABA
 const upload = multer({ storage: multer.memoryStorage() });
 const app = express();
 const port = process.env.PORT || 5000;
+app.disable('x-powered-by');
 
 // Render/Vercel are behind proxies; this fixes req.ip and secure detection.
 app.set('trust proxy', 1);
@@ -43,7 +43,7 @@ app.use(cors({
     if (allowedOrigins.has(origin)) return cb(null, true);
 
     // 3. Règle dynamique pour Vercel (previews et branches)
-    if (origin.endsWith('.vercel.app') || origin.includes('portfolio-pro-fraid')) {
+    if (allowVercelPreviewOrigins && origin.endsWith('.vercel.app') && origin.includes('portfolio-pro-fraid')) {
       return cb(null, true);
     }
 
@@ -117,7 +117,7 @@ const checkAdmin = (req, res, next) => {
   const apiKey = req.headers['x-admin-key'];
   
   // Debug log (à retirer après résolution)
-  console.log(`[AUTH] Key received: "${apiKey}" | Expected: "${ADMIN_KEY}"`);
+  console.log(`[AUTH] Admin request (hasKey=${Boolean(apiKey)}) ip=${req.ip}`);
 
   if (!ADMIN_KEY) {
     console.error("[CRITICAL] ADMIN_SECRET_KEY is NOT defined in .env!");
@@ -642,7 +642,7 @@ app.post('/api/profile', adminRateLimit, checkAdmin, async (req, res) => {
   }
 });
 
-// --- ROUTE CONTACT (Hybride Prisma + Email) ---
+/* --- ROUTE CONTACT (Hybride Prisma + Email) ---
 
 app.post('/api/contact', contactRateLimit, async (req, res) => {
   const { name, email, message } = req.body || {};
@@ -690,6 +690,8 @@ app.post('/api/contact', contactRateLimit, async (req, res) => {
     res.status(500).json({ error: "Impossible d'envoyer le message." });
   }
 });
+
+*/
 
 // --- DEVOPS ---
 app.get('/health', async (req, res) => {
@@ -748,6 +750,13 @@ app.get('/metrics', (req, res) => {
   lines.push(`fortlion_nodejs_memory_rss_bytes ${process.memoryUsage().rss}`);
 
   res.status(200).send(lines.join('\n') + '\n');
+});
+
+// Gestion d'erreurs centralisée (Express 5 gère les erreurs async automatiquement).
+app.use((err, req, res, next) => {
+  console.error('[ERROR] Unhandled error:', err);
+  if (res.headersSent) return next(err);
+  return res.status(500).json({ error: 'Internal server error' });
 });
 
 app.listen(port, () => {
