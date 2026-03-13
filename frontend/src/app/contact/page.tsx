@@ -43,14 +43,18 @@ export default function ContactPage() {
         }
       );
 
-      if (!response.ok) throw new Error();
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Une erreur est survenue");
+      }
 
       setStatus('success');
       (e.target as HTMLFormElement).reset();
-    } catch (err) {
+    } catch (err: any) {
       console.error("Submission error:", err);
       setStatus('error');
-      setErrorMsg("Impossible d'envoyer le message");
+      setErrorMsg(err.message || "Impossible d'envoyer le message");
     }
   };
 

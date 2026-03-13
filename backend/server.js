@@ -28,30 +28,25 @@ const configuredCorsOrigins = parseCommaList(process.env.CORS_ORIGINS);
 const allowVercelPreviewOrigins = process.env.CORS_ALLOW_VERCEL_PREVIEW === 'true';
 const allowedOrigins = new Set([
   ...configuredCorsOrigins,
-  // Local dev
   'http://localhost:3000',
+  'https://portfolio-pro-fraid.vercel.app',
+  'https://portfolio-pro-fraid-noovy4pce-fraids-projects.vercel.app'
 ]);
 
 // Configuration CORS
 app.use(cors({
   origin: (origin, cb) => {
-    // 1. Autoriser les requêtes serveur à serveur (pas d'origine)
+    // 1. Autoriser les requêtes sans origine (ex: Postman)
     if (!origin) return cb(null, true);
 
-    // 2. Vérifier les origines configurées (Set allowedOrigins)
+    // 2. Vérifier les origines explicites
     if (allowedOrigins.has(origin)) return cb(null, true);
 
-    // 3. Règle permissive pour Vercel (indispensable pour les previews)
-    if (origin.endsWith('.vercel.app')) {
+    // 3. Règle dynamique pour Vercel (previews et branches)
+    if (origin.endsWith('.vercel.app') || origin.includes('portfolio-pro-fraid')) {
       return cb(null, true);
     }
 
-    // 4. Fallback pour le domaine principal si CORS_ORIGINS est mal lu sur Render
-    if (origin.includes('portfolio-pro-fraid')) {
-      return cb(null, true);
-    }
-
-    // Logger pour debug si une autre origine tente d'accéder
     console.warn(`[CORS] Origine bloquée : ${origin}`);
     return cb(null, false);
   },
@@ -75,7 +70,9 @@ function setSecurityHeaders(req, res, next) {
 
 app.use(setSecurityHeaders);
 
+// Body parsing
 app.use(express.json({ limit: '200kb' }));
+app.use(express.urlencoded({ extended: true, limit: '200kb' }));
 
 const ADMIN_KEY = process.env.ADMIN_SECRET_KEY;
 
