@@ -1,12 +1,14 @@
 'use client';
 
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 type Status = 'idle' | 'loading' | 'success' | 'error';
 
 export default function ContactPage() {
   const [status, setStatus] = useState<Status>('idle');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const t = useTranslations('contact');
 
   // 🔒 Anti-liens basique mais efficace
   const containsLink = (text: string) => {
@@ -29,7 +31,7 @@ export default function ContactPage() {
     // 🛑 Validations simples
     if (containsLink(data.message)) {
       setStatus('error');
-      setErrorMsg("Les liens ne sont pas autorisés dans le message.");
+      setErrorMsg(t('no_links'));
       return;
     }
 
@@ -65,11 +67,11 @@ export default function ContactPage() {
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-extrabold mb-4
             bg-linear-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
-            Contactez-moi
+            {t('title')}
           </h1>
 
           <p className="text-gray-400 text-lg">
-            Offre, collaboration ou simple avis — je vous répondrai rapidement.
+            {t('subtitle')}
           </p>
         </div>
 
@@ -79,7 +81,7 @@ export default function ContactPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-400 mb-2">
-                  Votre nom
+                  {t('name')}
                 </label>
                 <input
                   name="name"
@@ -93,7 +95,7 @@ export default function ContactPage() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-400 mb-2">
-                  Votre email
+                  {t('email')}
                 </label>
                 <input
                   name="email"
@@ -108,13 +110,13 @@ export default function ContactPage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-400 mb-2">
-                Message
+                {t('message')}
               </label>
               <textarea
                 name="message"
                 rows={6}
                 required
-                placeholder="Décrivez votre besoin (sans liens svp 😉)"
+                placeholder={t('placeholder_message')}
                 className="w-full p-4 bg-slate-800/50 border border-slate-700 rounded-xl
                 focus:ring-2 focus:ring-blue-500 outline-none transition placeholder:text-gray-600"
               />
@@ -134,12 +136,12 @@ export default function ContactPage() {
               {status === 'loading' ? (
                 <>
                   <span className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Envoi…
+                  {t('sending')}
                 </>
               ) : status === 'success' ? (
-                'Message envoyé'
+                t('sent')
               ) : (
-                'Envoyer le message'
+                t('send')
               )}
             </button>
 
@@ -147,7 +149,7 @@ export default function ContactPage() {
             {status === 'success' && (
               <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-xl
               text-green-400 text-center font-medium">
-                ✅ Votre message a bien été envoyé. Merci !
+                ✅ {t('success')}
               </div>
             )}
 

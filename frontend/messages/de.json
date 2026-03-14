@@ -1,0 +1,53 @@
+{
+  "menu": {
+    "home": "Startseite",
+    "projects": "Projekte",
+    "contact": "Kontakt",
+    "about": "Über mich"
+  },
+  "home": {
+    "title": "Willkommen in meinem Portfolio",
+    "subtitle": "Software-Ingenieur & DevOps-Enthusiast",
+    "cta": "Kontaktieren Sie mich"
+  },
+  "about": {
+    "title": "Meine Projekte",
+    "subtitle": "Eine dynamische Liste meiner Erfolge, synchronisiert mit meiner Datenbank.",
+    "recentProjects": "Aktuelle Projekte",
+    "apiLive": "API Live",
+    "details": "Details",
+    "noProjects": "Keine Projekte in der Datenbank gefunden.",
+    "backToProjects": "Zurück zu den Projekten",
+    "aboutProject": "Über das Projekt",
+    "personalContribution": "Persönlicher Beitrag",
+    "defaultContribution": "Architektur, Backend-Entwicklung, Docker-Containerisierung und Deployment.",
+    "resources": "Ressourcen",
+    "sourceCode": "Quellcode",
+    "viewArchive": "Vollständiges Archiv ansehen",
+    "certsTitle": "Zertifizierungen & Abzeichen",
+    "verified": "Verifiziert",
+    "viewFullCertPath": "Meinen vollständigen Lebenslauf ansehen",
+    "location": "Standort",
+    "degree": "Abschluss",
+    "focus": "Schwerpunkt",
+    "path": "Karriere & Erfahrungen",
+    "certifications_title": "Meine Zertifizierungen",
+    "certifications_desc": "Ich ergänze meinen akademischen Weg regelmäßig durch anerkannte Branchenzertifizierungen.",
+    "certifications_cta": "Meine Badges ansehen",
+    "skills_title": "Technische Meisterschaft",
+    "available": "Verfügbar ab September 2026"
+  },
+  "contact": {
+    "title": "Kontaktieren Sie mich",
+    "subtitle": "Angebot, Zusammenarbeit oder einfach nur Feedback — ich werde mich bald bei Ihnen melden.",
+    "name": "Ihr Name",
+    "email": "Ihre E-Mail",
+    "message": "Nachricht",
+    "placeholder_message": "Beschreiben Sie Ihr Anliegen (bitte keine Links 😉)",
+    "send": "Nachricht senden",
+    "sending": "Senden…",
+    "sent": "Nachricht gesendet",
+    "success": "Ihre Nachricht wurde erfolgreich versendet. Vielen Dank!",
+    "no_links": "Links sind in der Nachricht nicht erlaubt."
+  }
+}

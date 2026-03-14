@@ -243,14 +243,36 @@ app.delete('/api/upload', adminRateLimit, checkAdmin, async (req, res) => {
 });
 
 
+// Helper to ensure multilingual fields are objects
+const toI18n = (val) => {
+  if (typeof val === 'object' && val !== null) return val;
+  return { fr: String(val || '').trim(), en: String(val || '').trim(), de: String(val || '').trim() };
+};
+
+// Helper to filter response by locale
+const filterByLocale = (item, locale) => {
+  const result = { ...item };
+  if (result.title && typeof result.title === 'object') {
+    result.title = result.title[locale] || result.title['fr'] || '';
+  }
+  if (result.description && typeof result.description === 'object') {
+    result.description = result.description[locale] || result.description['fr'] || '';
+  }
+  return result;
+};
+
 // --- ROUTES PROJETS ---
 
 app.get('/api/projects', async (req, res) => {
+  const { locale } = req.query;
   try {
     const projects = await prisma.project.findMany({
-      orderBy: { createdAt: 'desc' },
-      select: { id: true, title: true, tech: true, category: true, description: true, imageUrl: true }
+      orderBy: { createdAt: 'desc' }
     });
+    
+    if (locale) {
+      return res.json(projects.map(p => filterByLocale(p, locale)));
+    }
     res.json(projects);
   } catch (error) {
     console.error("Erreur Prisma (Liste):", error);
@@ -260,14 +282,16 @@ app.get('/api/projects', async (req, res) => {
 
 app.get('/api/projects/:id', async (req, res) => {
   const { id } = req.params;
+  const { locale } = req.query;
   if (!id) return res.status(400).json({ error: "ID invalide." });
 
   try {
     const project = await prisma.project.findUnique({ where: { id } });
     if (!project) return res.status(404).json({ error: "Projet introuvable." });
 
+    const result = locale ? filterByLocale(project, locale) : project;
     res.json({
-      ...project,
+      ...result,
       media: [{ type: 'image', url: project.imageUrl || 'https://via.placeholder.com/800x450' }]
     });
   } catch (error) {
@@ -278,28 +302,17 @@ app.get('/api/projects/:id', async (req, res) => {
 app.post('/api/projects', adminRateLimit, checkAdmin, async (req, res) => {
   const { title, tech, category, description, imageUrl, githubLink, liveLink } = req.body || {};
 
-  const safeTitle = typeof title === 'string' ? title.trim() : '';
-  const safeTech = typeof tech === 'string' ? tech.trim() : '';
-  const safeCategory = typeof category === 'string' ? category.trim() : '';
-  const safeDescription = typeof description === 'string' ? description.trim() : '';
-
-  if (!safeTitle || safeTitle.length > 120) return res.status(400).json({ error: "Titre invalide." });
-  if (!safeTech || safeTech.length > 200) return res.status(400).json({ error: "Tech invalide." });
-  if (!safeCategory || safeCategory.length > 40) return res.status(400).json({ error: "Catégorie invalide." });
-  if (!safeDescription || safeDescription.length > 2000) return res.status(400).json({ error: "Description invalide." });
-
   try {
     const created = await prisma.project.create({
       data: {
-        title: safeTitle,
-        tech: safeTech,
-        category: safeCategory,
-        description: safeDescription,
+        title: toI18n(title),
+        tech: typeof tech === 'string' ? tech.trim() : '',
+        category: typeof category === 'string' ? category.trim() : '',
+        description: toI18n(description),
         imageUrl: typeof imageUrl === 'string' ? imageUrl.trim() : null,
         githubLink: typeof githubLink === 'string' ? githubLink.trim() : null,
         liveLink: typeof liveLink === 'string' ? liveLink.trim() : null,
-      },
-      select: { id: true, title: true, tech: true, category: true, description: true, imageUrl: true, githubLink: true, liveLink: true, createdAt: true }
+      }
     });
     return res.status(201).json(created);
   } catch (error) {
@@ -330,10 +343,10 @@ app.put('/api/projects/:id', adminRateLimit, checkAdmin, async (req, res) => {
     const updated = await prisma.project.update({
       where: { id },
       data: {
-        ...(title && { title: String(title).trim() }),
+        ...(title && { title: toI18n(title) }),
         ...(tech && { tech: String(tech).trim() }),
         ...(category && { category: String(category).trim() }),
-        ...(description && { description: String(description).trim() }),
+        ...(description && { description: toI18n(description) }),
         ...(imageUrl !== undefined && { imageUrl: imageUrl ? String(imageUrl).trim() : null }),
         ...(githubLink !== undefined && { githubLink: githubLink ? String(githubLink).trim() : null }),
         ...(liveLink !== undefined && { liveLink: liveLink ? String(liveLink).trim() : null })
@@ -442,10 +455,14 @@ app.delete('/api/tags/:id', adminRateLimit, checkAdmin, async (req, res) => {
 
 // --- ROUTES CERTIFICATS ---
 app.get('/api/certificates', async (req, res) => {
+  const { locale } = req.query;
   try {
     const certs = await prisma.certificate.findMany({
       orderBy: { createdAt: 'desc' }
     });
+    if (locale) {
+      return res.json(certs.map(c => filterByLocale(c, locale)));
+    }
     res.json(certs);
   } catch (error) {
     return res.status(500).json({ error: "Impossible de récupérer les certificats." });
@@ -458,7 +475,7 @@ app.post('/api/certificates', adminRateLimit, checkAdmin, async (req, res) => {
   try {
     const created = await prisma.certificate.create({
       data: {
-        title: String(title).trim(),
+        title: toI18n(title),
         issuer: String(issuer).trim(),
         date: date ? String(date).trim() : null,
         link: link ? String(link).trim() : null,
@@ -479,7 +496,7 @@ app.put('/api/certificates/:id', adminRateLimit, checkAdmin, async (req, res) =>
     const updated = await prisma.certificate.update({
       where: { id },
       data: {
-        ...(title && { title: String(title).trim() }),
+        ...(title && { title: toI18n(title) }),
         ...(issuer && { issuer: String(issuer).trim() }),
         ...(date !== undefined && { date: date ? String(date).trim() : null }),
         ...(link !== undefined && { link: link ? String(link).trim() : null }),
@@ -505,10 +522,14 @@ app.delete('/api/certificates/:id', adminRateLimit, checkAdmin, async (req, res)
 
 // --- ROUTES EXPERIENCES (PARCOURS) ---
 app.get('/api/experiences', async (req, res) => {
+  const { locale } = req.query;
   try {
     const experiences = await prisma.experience.findMany({
-      orderBy: { order: 'desc' } // Reversed as requested (Practical at top if order is high)
+      orderBy: { order: 'desc' }
     });
+    if (locale) {
+      return res.json(experiences.map(e => filterByLocale(e, locale)));
+    }
     res.json(experiences);
   } catch (error) {
     return res.status(500).json({ error: "Impossible de récupérer le parcours." });
@@ -521,11 +542,11 @@ app.post('/api/experiences', adminRateLimit, checkAdmin, async (req, res) => {
   try {
     const created = await prisma.experience.create({
       data: {
-        title: String(title).trim(),
+        title: toI18n(title),
         company: company ? String(company).trim() : null,
         location: location ? String(location).trim() : null,
         period: String(period).trim(),
-        description: String(description).trim(),
+        description: toI18n(description),
         order: parseInt(order) || 0
       }
     });
@@ -543,11 +564,11 @@ app.put('/api/experiences/:id', adminRateLimit, checkAdmin, async (req, res) => 
     const updated = await prisma.experience.update({
       where: { id },
       data: {
-        ...(title && { title: String(title).trim() }),
+        ...(title && { title: toI18n(title) }),
         ...(company !== undefined && { company: company ? String(company).trim() : null }),
         ...(location !== undefined && { location: location ? String(location).trim() : null }),
         ...(period && { period: String(period).trim() }),
-        ...(description && { description: String(description).trim() }),
+        ...(description && { description: toI18n(description) }),
         ...(order !== undefined && { order: parseInt(order) || 0 })
       }
     });

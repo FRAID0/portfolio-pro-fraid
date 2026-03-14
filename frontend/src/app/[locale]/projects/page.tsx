@@ -1,10 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link'; // CRUCIAL : Importation du lien Next.js
+import { useTranslations } from 'next-intl';
+import { useParams } from 'next/navigation';
+import { Link } from '@/i18n/routing';
 
 interface Project {
-  id: number;
+  id: string;
   title: string;
   tech: string;
   category: string;
@@ -12,11 +14,13 @@ interface Project {
 }
 
 export default function ProjectsPage() {
+  const t = useTranslations('projects');
+  const { locale } = useParams();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`/api/projects`)
+    fetch(`/api/projects?locale=${locale}`)
       .then((res) => res.json())
       .then((data) => {
         setProjects(data);
@@ -26,15 +30,15 @@ export default function ProjectsPage() {
         console.error("Erreur API:", err);
         setLoading(false);
       });
-  }, []);
+  }, [locale]);
 
   return (
     <div className="min-h-screen py-24 px-6 sm:py-32 lg:px-8 bg-slate-950">
       <div className="mx-auto max-w-7xl">
         <div className="mx-auto max-w-2xl lg:mx-0">
-          <h2 className="text-4xl font-bold tracking-tight text-white sm:text-6xl">Mes Projets</h2>
+          <h2 className="text-4xl font-bold tracking-tight text-white sm:text-6xl">{t('title')}</h2>
           <p className="mt-6 text-lg leading-8 text-slate-300">
-            Une liste dynamique de mes réalisations, synchronisée avec ma base de données.
+            {t('subtitle')}
           </p>
         </div>
 
@@ -68,7 +72,7 @@ export default function ProjectsPage() {
                 </div>
 
                 <div className="mt-8 flex border-t border-slate-800 pt-6 w-full justify-between items-center">
-                   <span className="text-xs text-slate-500 font-mono">Détails →</span>
+                   <span className="text-xs text-slate-500 font-mono">{t('details')} →</span>
                    <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" title="Live data"></div>
                 </div>
               </Link>
@@ -78,7 +82,7 @@ export default function ProjectsPage() {
 
         {projects.length === 0 && !loading && (
           <div className="mt-16 text-center text-slate-500 italic">
-            Aucun projet trouvé dans la base de données.
+            {t('noProjects')}
           </div>
         )}
       </div>
