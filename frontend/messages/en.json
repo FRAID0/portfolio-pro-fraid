@@ -1,0 +1,57 @@
+{
+  "menu": {
+    "home": "Home",
+    "projects": "Projects",
+    "contact": "Contact",
+    "about": "About"
+  },
+  "home": {
+    "title": "Welcome to my Portfolio",
+    "subtitle": "Infrastructure & backend specialist, I design robust and scalable solutions.",
+    "recentProjects": "Recent Projects",
+    "apiLive": "API Live",
+    "noProjects": "No projects found.",
+    "viewArchive": "View full archive",
+    "certsTitle": "Certifications & Badges",
+    "verified": "Verified",
+    "viewFullCertPath": "View my full journey"
+  },
+  "projects": {
+    "title": "My Projects",
+    "subtitle": "A dynamic list of my achievements, synced with my database.",
+    "details": "Details",
+    "noProjects": "No projects found in the database.",
+    "backToProjects": "Back to projects",
+    "aboutProject": "About the project",
+    "personalContribution": "Personal contribution",
+    "defaultContribution": "Architecture, backend development, Docker containerization and deployment.",
+    "resources": "Resources",
+    "sourceCode": "Source code"
+  },
+  "about": {
+    "title": "About Wilfried",
+    "subtitle": "Applied Computer Science student at Hochschule Worms. Passionate about Full-Stack development, automation, and Cloud engineering.",
+    "location": "Location",
+    "degree": "Degree",
+    "focus": "Focus",
+    "path": "Path & Experiences",
+    "certifications_title": "My Certifications",
+    "certifications_desc": "I regularly complete my academic path with recognized industry certifications.",
+    "certifications_cta": "View my badges",
+    "skills_title": "Technical Mastery",
+    "available": "Available for September 2026"
+  },
+  "contact": {
+    "title": "Get in Touch",
+    "subtitle": "Collaboration, projects, or just a quick chat — I'll get back to you soon.",
+    "name": "Your Name",
+    "email": "Your Email",
+    "message": "Message",
+    "placeholder_message": "Describe your needs (no links please 😉)",
+    "send": "Send Message",
+    "sending": "Sending...",
+    "sent": "Message Sent",
+    "success": "Your message has been sent successfully. Thank you!",
+    "no_links": "Links are not allowed in the message."
+  }
+}

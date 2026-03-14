@@ -2,7 +2,8 @@
 
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
+import { Link } from '@/i18n/routing';
+import { useTranslations } from 'next-intl';
 
 // ✅ Swiper v11+ correct import
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -25,20 +26,22 @@ type Project = {
 };
 
 export default function ProjectDetail() {
-  const params = useParams<{ id: string }>();
+  const t = useTranslations('projects');
+  const params = useParams<{ id: string; locale: string }>();
   const [project, setProject] = useState<Project | null>(null);
+  const locale = params?.locale;
 
   useEffect(() => {
     if (!params?.id) return;
 
-    fetch(`/api/projects/${params.id}`)
+    fetch(`/api/projects/${params.id}?locale=${locale}`)
       .then(res => {
         if (!res.ok) throw new Error('Projet introuvable');
         return res.json();
       })
       .then(data => setProject(data))
       .catch(err => console.error('Erreur chargement projet :', err));
-  }, [params?.id]);
+  }, [params?.id, locale]);
 
   if (!project) {
     return (
@@ -56,7 +59,7 @@ export default function ProjectDetail() {
           href="/projects"
           className="text-blue-500 hover:text-blue-400 mb-10 inline-flex items-center gap-2"
         >
-          ← Retour aux projets
+          ← {t('backToProjects')}
         </Link>
 
         {/* Header */}
@@ -121,7 +124,7 @@ export default function ProjectDetail() {
           <div className="lg:col-span-2 space-y-12">
             <section>
               <h2 className="text-2xl font-bold text-white mb-6">
-                À propos du projet
+                {t('aboutProject')}
               </h2>
               <p className="text-slate-400 text-lg leading-relaxed whitespace-pre-line">
                 {project.description}
@@ -130,18 +133,18 @@ export default function ProjectDetail() {
 
             <section className="bg-slate-900/40 p-8 rounded-3xl border border-slate-800">
               <h2 className="text-2xl font-bold text-white mb-4">
-                Contribution personnelle
+                {t('personalContribution')}
               </h2>
               <p className="text-slate-300 whitespace-pre-line">
                 {project.contribution ||
-                  "Architecture, développement backend, conteneurisation Docker et déploiement."}
+                  t('defaultContribution')}
               </p>
             </section>
           </div>
 
           <aside>
             <div className="p-8 bg-slate-900/60 border border-slate-800 rounded-3xl sticky top-28">
-              <h3 className="text-white font-bold mb-4">Ressources</h3>
+              <h3 className="text-white font-bold mb-4">{t('resources')}</h3>
 
               <a
                 href={project.githubLink || 'https://github.com/fraid0'}
@@ -149,7 +152,7 @@ export default function ProjectDetail() {
                 rel="noopener noreferrer"
                 className="block p-4 rounded-xl border border-slate-800 hover:border-blue-500 transition"
               >
-                Code source →
+                {t('sourceCode')} →
               </a>
             </div>
           </aside>

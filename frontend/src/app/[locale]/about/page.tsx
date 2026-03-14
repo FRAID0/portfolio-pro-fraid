@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import Link from 'next/link';
+import { Link } from '@/i18n/routing';
+import { useTranslations } from 'next-intl';
+import { useParams } from 'next/navigation';
 
 interface Experience {
   id: number;
@@ -15,11 +17,14 @@ interface Experience {
 }
 
 export default function About() {
+
+  const { locale } = useParams();
   const [experiences, setExperiences] = useState<Experience[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const t = useTranslations('about');
 
   useEffect(() => {
-    fetch('/api/experiences')
+    fetch(`/api/experiences?locale=${locale}`)
       .then(async res => {
         if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
         const contentType = res.headers.get("content-type");
@@ -53,7 +58,7 @@ export default function About() {
               animate={{ opacity: 1, x: 0 }}
               className="text-5xl lg:text-7xl font-extrabold text-white mb-8 tracking-tight"
             >
-              À propos de <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-600">Wilfried</span>
+              {t('title')}
             </motion.h1>
             <motion.p 
               initial={{ opacity: 0, y: 10 }}
@@ -61,9 +66,7 @@ export default function About() {
               transition={{ delay: 0.2 }}
               className="text-xl text-slate-400 leading-relaxed font-light mb-8"
             >
-              Étudiant en <span className="text-white font-medium">Angewandte Informatik</span> à la Hochschule Worms,
-              passionné par le développement Full-Stack, l&apos;automatisation et l&apos;ingénierie Cloud. J&apos;aime transformer des
-              problèmes complexes en solutions simples, robustes et maintenables.
+              {t('subtitle')}
             </motion.p>
 
             <motion.div 
@@ -73,15 +76,15 @@ export default function About() {
                className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-sm text-slate-500 font-mono uppercase tracking-widest border-t border-slate-900 pt-8"
             >
               <div className="flex flex-col gap-1">
-                <span className="text-blue-500 font-bold">Localisation</span>
+                <span className="text-blue-500 font-bold">{t('location')}</span>
                 Mannheim, DE
               </div>
               <div className="flex flex-col gap-1">
-                <span className="text-blue-500 font-bold">Diplôme</span>
+                <span className="text-blue-500 font-bold">{t('degree')}</span>
                 Bachelor Info.
               </div>
               <div className="flex flex-col gap-1">
-                <span className="text-blue-500 font-bold">Focus</span>
+                <span className="text-blue-500 font-bold">{t('focus')}</span>
                 Fullstack / Cloud
               </div>
             </motion.div>
@@ -95,7 +98,7 @@ export default function About() {
              <div className="absolute inset-0 bg-blue-500/10 group-hover:bg-blue-500/20 transition-all" />
              <span className="text-8xl select-none grayscale group-hover:grayscale-0 transition-all duration-700">👨‍💻</span>
              <div className="absolute bottom-4 left-4 right-4 p-4 bg-slate-950/80 backdrop-blur-md rounded-2xl border border-slate-800">
-                <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Disponible pour Septembre 2026</p>
+                <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">{t('available')}</p>
              </div>
           </motion.div>
         </section>
@@ -105,7 +108,7 @@ export default function About() {
           <div className="lg:col-span-2">
             <h2 className="text-3xl font-bold text-white mb-12 flex items-center gap-4">
               <span className="h-0.5 w-12 bg-blue-500"></span>
-              Parcours & Expériences
+              {t('path')}
             </h2>
 
             {isLoading ? (
@@ -152,15 +155,15 @@ export default function About() {
           {/* Section Certifications & Links */}
           <aside className="space-y-12">
              <div className="p-8 bg-slate-900/40 border border-slate-800 rounded-[2.5rem] sticky top-32 backdrop-blur-sm">
-                <h3 className="text-xl font-bold text-white mb-6">Mes Certifications</h3>
+                <h3 className="text-xl font-bold text-white mb-6">{t('certifications_title')}</h3>
                 <p className="text-slate-400 text-sm mb-8 leading-relaxed">
-                  Je complète régulièrement mon parcours académique par des certifications industrielles reconnues.
+                  {t('certifications_desc')}
                 </p>
                 <Link 
                   href="/certifications"
                   className="group flex items-center justify-between p-4 bg-yellow-500 text-slate-950 font-bold rounded-2xl hover:scale-[1.02] transition-all"
                 >
-                  Consulter mes badges
+                  {t('certifications_cta')}
                   <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M14 5l7 7m0 0l-7 7m7-7H3" />
                   </svg>
@@ -179,7 +182,7 @@ export default function About() {
         <section className="mt-32">
           <h2 className="text-3xl font-bold text-white mb-12 flex items-center gap-4">
             <span className="h-0.5 w-12 bg-purple-500"></span>
-            Maîtrise Technique
+            {t('skills_title')}
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">

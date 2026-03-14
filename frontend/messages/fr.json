@@ -1,0 +1,57 @@
+{
+  "menu": {
+    "home": "Accueil",
+    "projects": "Projets",
+    "contact": "Contact",
+    "about": "À propos"
+  },
+  "home": {
+    "title": "Bienvenue sur mon Portfolio",
+    "subtitle": "Spécialiste infrastructure & backend, je conçois des solutions robustes et évolutives.",
+    "recentProjects": "Projets Récents",
+    "apiLive": "API Live",
+    "noProjects": "Aucun projet trouvé.",
+    "viewArchive": "Voir l'archive complète",
+    "certsTitle": "Certifications & Badges",
+    "verified": "Vérifiées",
+    "viewFullCertPath": "Voir mon parcours complet"
+  },
+  "projects": {
+    "title": "Mes Projets",
+    "subtitle": "Une liste dynamique de mes réalisations, synchronisée avec ma base de données.",
+    "details": "Détails",
+    "noProjects": "Aucun projet trouvé dans la base de données.",
+    "backToProjects": "Retour aux projets",
+    "aboutProject": "À propos du projet",
+    "personalContribution": "Contribution personnelle",
+    "defaultContribution": "Architecture, développement backend, conteneurisation Docker et déploiement.",
+    "resources": "Ressources",
+    "sourceCode": "Code source"
+  },
+  "about": {
+    "title": "À propos de Wilfried",
+    "subtitle": "Étudiant en Informatique Appliquée à la Hochschule Worms. Passionné par le développement Full-Stack, l'automatisation et l'ingénierie Cloud.",
+    "location": "Localisation",
+    "degree": "Diplôme",
+    "focus": "Focus",
+    "path": "Parcours & Expériences",
+    "certifications_title": "Mes Certifications",
+    "certifications_desc": "Je complète régulièrement mon parcours académique par des certifications industrielles reconnues.",
+    "certifications_cta": "Consulter mes badges",
+    "skills_title": "Maîtrise Technique",
+    "available": "Disponible pour Septembre 2026"
+  },
+  "contact": {
+    "title": "Contactez-moi",
+    "subtitle": "Offre, collaboration ou simple avis — je vous répondrai rapidement.",
+    "name": "Votre nom",
+    "email": "Votre email",
+    "message": "Message",
+    "placeholder_message": "Décrivez votre besoin (sans liens svp 😉)",
+    "send": "Envoyer le message",
+    "sending": "Envoi…",
+    "sent": "Message envoyé",
+    "success": "Votre message a bien été envoyé. Merci !",
+    "no_links": "Les liens ne sont pas autorisés dans le message."
+  }
+}

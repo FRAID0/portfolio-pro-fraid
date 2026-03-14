@@ -12,8 +12,8 @@ datasource db {
 // 1. Table des Projets (Optimisée pour l'affichage et l'admin)
 model Project {
   id          String   @id @default(uuid())
-  title       String
-  description String
+  title       Json     // { "en": "...", "fr": "...", "de": "..." }
+  description Json     // { "en": "...", "fr": "...", "de": "..." }
   category    String   
   tech        String   
   imageUrl    String?  
@@ -58,7 +58,7 @@ model Tag {
 // 5. Table des Certificats
 model Certificate {
   id        String   @id @default(uuid())
-  title     String
+  title     Json     // { "en": "...", "fr": "...", "de": "..." }
   issuer    String
   date      String?  
   link      String?  
@@ -71,11 +71,11 @@ model Certificate {
 // 6. Table des Expériences
 model Experience {
   id          String   @id @default(uuid())
-  title       String
+  title       Json     // { "en": "...", "fr": "...", "de": "..." }
   company     String?
   location    String?
   period      String
-  description String
+  description Json     // { "en": "...", "fr": "...", "de": "..." }
   order       Int      @default(0)
   createdAt   DateTime @default(now())
 }
